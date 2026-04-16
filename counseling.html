@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counseling Sheet | SORA - HAIR & EYELASH -</title>
+    <meta name="description" content="SORA - HAIR & EYELASH - カウンセリングシート。施術前にお客様の体質・ご要望を確認させていただきます。">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header id="site-header" class="site-header"></header>
+
+    <section class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Counseling Sheet</span>
+            <h1>カウンセリングシート</h1>
+        </div>
+    </section>
+
+    <!-- 印刷用ヘッダー -->
+    <div class="print-header">
+        <h1>SORA - HAIR &amp; EYELASH -　カウンセリングシート</h1>
+        <p>施術前に必ずご記入をお願いいたします。ご記入いただいた内容は施術の安全性確保のみに使用いたします。</p>
+    </div>
+
+    <section class="form-section" style="padding-top: var(--space-xl);">
+        <div class="form-container" style="max-width: 820px;">
+
+            <div class="counseling-intro">
+                <p>
+                    安全で最適な施術を行うため、事前にお客様の体質やご要望をお伺いしております。<br>
+                    以下のご質問にお答えください。ご記入いただいた内容は施術の安全性確保のみに使用いたします。
+                </p>
+            </div>
+
+            <div class="form-card">
+                <form action="#" method="post" class="counseling-form">
+
+                    <!-- 基本情報 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">01</span>
+                        基本情報 <span class="form-section-en">Basic Information</span>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>お名前（フルネーム）<span class="required">必須</span></label>
+                            <input type="text" name="name" required placeholder="例：山田 花子">
+                        </div>
+                        <div class="form-row">
+                            <label>フリガナ<span class="required">必須</span></label>
+                            <input type="text" name="name_kana" required placeholder="例：ヤマダ ハナコ">
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>お電話番号<span class="required">必須</span></label>
+                            <input type="tel" name="tel" required placeholder="例：090-1234-5678">
+                        </div>
+                        <div class="form-row">
+                            <label>メールアドレス</label>
+                            <input type="email" name="email" placeholder="例：hanako@example.com">
+                        </div>
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>生年月日</label>
+                            <input type="date" name="birthday">
+                        </div>
+                        <div class="form-row">
+                            <label>ご来店日</label>
+                            <input type="date" name="visit_date">
+                        </div>
+                    </div>
+
+                    <!-- 健康状態 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">02</span>
+                        健康状態の確認 <span class="form-section-en">Health Check</span>
+                    </div>
+                    <p class="form-section-desc">
+                        安全な施術のため、以下の項目をご確認ください。該当するものに全てチェックをお入れください。
+                    </p>
+
+                    <div class="check-group">
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="eye_disease">
+                            <span class="check-label">現在、眼科に通院中 または 目の疾患がある（結膜炎・ものもらい・ドライアイ等）</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="allergy">
+                            <span class="check-label">アレルギー体質である（金属・ラテックス・食物・花粉等）</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="skin_sensitive">
+                            <span class="check-label">敏感肌・アトピー性皮膚炎がある</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="eye_surgery">
+                            <span class="check-label">過去に目の手術を受けたことがある（レーシック・二重整形等）</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="pregnant">
+                            <span class="check-label">妊娠中 または 授乳中である</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="medication">
+                            <span class="check-label">現在、服用中のお薬がある</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="glaucoma_drops">
+                            <span class="check-label">まつ毛美容液・緑内障点眼薬を使用中</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="contact">
+                            <span class="check-label">コンタクトレンズを使用している</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="health[]" value="none">
+                            <span class="check-label">上記いずれにも該当しない</span>
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <label>該当がある場合、詳細をご記入ください</label>
+                        <textarea name="health_detail" rows="3" placeholder="例：花粉症あり（春季）、ハードコンタクト使用中、レーシック2020年に実施 等"></textarea>
+                    </div>
+
+                    <!-- まつ毛エクステ経験 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">03</span>
+                        まつ毛エクステのご経験 <span class="form-section-en">Extension History</span>
+                    </div>
+
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="ext_exp" value="first" required>
+                            <span class="radio-label">初めて</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="ext_exp" value="few">
+                            <span class="radio-label">2〜3回程度</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="ext_exp" value="regular">
+                            <span class="radio-label">定期的に通っている</span>
+                        </label>
+                    </div>
+
+                    <div class="form-row">
+                        <label>過去にトラブルがあった場合はご記入ください</label>
+                        <textarea name="ext_trouble" rows="2" placeholder="例：グルーでかゆみが出た、目が赤くなった 等"></textarea>
+                    </div>
+
+                    <!-- 施術のご希望 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">04</span>
+                        施術のご希望 <span class="form-section-en">Style Preferences</span>
+                    </div>
+
+                    <div class="form-row">
+                        <label>ご希望メニュー</label>
+                        <select name="menu">
+                            <option value="">選択してください</option>
+                            <optgroup label="まつ毛エクステ">
+                                <option>ナチュラル 80本</option>
+                                <option>キュート 100本</option>
+                                <option>エレガント 120本</option>
+                                <option>ゴージャス 140本</option>
+                                <option>付け放題（〜200本）</option>
+                            </optgroup>
+                            <optgroup label="まつ毛パーマ">
+                                <option>ナチュラルリフト（まつ毛パーマ）</option>
+                                <option>パリジェンヌリフト</option>
+                            </optgroup>
+                            <optgroup label="リペア">
+                                <option>リペア 〜40本（2週間以内）</option>
+                                <option>リペア 〜100本（3週間以内）</option>
+                            </optgroup>
+                            <optgroup label="アイブロウ">
+                                <option>アイブロウカット</option>
+                                <option>ブロウワックス</option>
+                                <option>ブロウラミネーション</option>
+                            </optgroup>
+                            <optgroup label="ヘア">
+                                <option>カット</option>
+                                <option>カラー</option>
+                                <option>パーマ</option>
+                                <option>トリートメント</option>
+                                <option>セットメニュー</option>
+                            </optgroup>
+                            <optgroup label="その他">
+                                <option>ドライヘッドスパ</option>
+                                <option>ヘアアレンジ</option>
+                                <option>着付け</option>
+                                <option>相談して決めたい</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <label>仕上がりイメージのご希望</label>
+                        <div class="check-group">
+                            <label class="check-item">
+                                <input type="checkbox" name="style[]" value="natural">
+                                <span class="check-label">ナチュラル（自まつ毛に馴染む）</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="style[]" value="cute">
+                                <span class="check-label">キュート（丸みのある目元）</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="style[]" value="elegant">
+                                <span class="check-label">エレガント（目尻長めで切れ長に）</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="style[]" value="gorgeous">
+                                <span class="check-label">ゴージャス（しっかりボリューム）</span>
+                            </label>
+                            <label class="check-item">
+                                <input type="checkbox" name="style[]" value="consult">
+                                <span class="check-label">スタッフと相談して決めたい</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <label>その他ご要望・気になること</label>
+                        <textarea name="requests" rows="3" placeholder="例：仕事柄あまり派手にできない、左右のバランスが気になる、参考画像あり 等"></textarea>
+                    </div>
+
+                    <!-- 同意事項 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">05</span>
+                        同意事項 <span class="form-section-en">Agreement</span>
+                    </div>
+
+                    <div class="agreement-box">
+                        <p>以下の内容をご確認のうえ、同意欄にチェックをお願いいたします。</p>
+                        <ul>
+                            <li>まつ毛エクステは、体質や体調により稀にアレルギー反応（かゆみ・赤み・腫れ等）が生じる場合があります。</li>
+                            <li>施術後に異常を感じた場合は、速やかに眼科を受診してください。</li>
+                            <li>コンタクトレンズは施術前にお外しいただきます（ハードレンズの方は必ずケースをご持参ください）。</li>
+                            <li>施術後3〜4時間は洗顔・入浴をお控えいただくと持ちが良くなります。</li>
+                            <li>まつ毛の状態（本数・長さ・強度）により、ご希望の本数やデザインを調整させていただく場合があります。</li>
+                            <li>ご記入いただいた個人情報は、当サロンの施術・顧客管理の目的以外には使用いたしません。</li>
+                        </ul>
+                    </div>
+
+                    <div class="check-group" style="margin-top: 1.5rem;">
+                        <label class="check-item check-item--agree">
+                            <input type="checkbox" name="agree" value="yes" required>
+                            <span class="check-label"><strong>上記の内容を確認し、同意いたします。</strong></span>
+                        </label>
+                    </div>
+
+                    <!-- 署名欄（印刷用） -->
+                    <div class="signature-area print-only">
+                        <div class="signature-row">
+                            <div class="signature-field">
+                                <span class="signature-label">ご署名</span>
+                                <span class="signature-line"></span>
+                            </div>
+                            <div class="signature-field signature-date">
+                                <span class="signature-label">日付</span>
+                                <span class="signature-line"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-submit no-print">
+                        <button type="submit" class="btn btn-primary">送信する</button>
+                        <p class="form-note">
+                            ※このフォームは店内タブレットまたは印刷してご使用ください。<br>
+                        </p>
+                        <button type="button" class="btn btn-outline-sage" onclick="window.print()" style="margin-top: 1rem;">
+                            印刷する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer id="site-footer" class="site-footer"></footer>
+    <script src="main.js"></script>
+</body>
+</html>

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo Consent | SORA - HAIR & EYELASH -</title>
+    <meta name="description" content="SORA - HAIR & EYELASH - 施術写真撮影・掲載同意書">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header id="site-header" class="site-header"></header>
+
+    <section class="page-header">
+        <div class="page-header-inner">
+            <span class="section-label">Photo Consent</span>
+            <h1>施術写真 撮影・掲載同意書</h1>
+        </div>
+    </section>
+
+    <!-- 印刷用ヘッダー -->
+    <div class="print-header">
+        <h1>SORA - HAIR &amp; EYELASH -　施術写真 撮影・掲載同意書</h1>
+    </div>
+
+    <section class="form-section" style="padding-top: var(--space-xl);">
+        <div class="form-container" style="max-width: 820px;">
+
+            <div class="counseling-intro">
+                <p>
+                    当サロンでは、施術の記録およびお客様への仕上がりご報告のために写真撮影を行っております。<br>
+                    撮影した写真をSNS・Webサイト等で掲載させていただく場合がございますので、以下をご確認のうえ同意書へのご記入をお願いいたします。
+                </p>
+            </div>
+
+            <div class="form-card">
+                <form action="#" method="post" class="counseling-form">
+
+                    <!-- 基本情報 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">01</span>
+                        お客様情報 <span class="form-section-en">Customer Information</span>
+                    </div>
+
+                    <div class="form-grid-2">
+                        <div class="form-row">
+                            <label>お名前<span class="required">必須</span></label>
+                            <input type="text" name="name" required placeholder="例：山田 花子">
+                        </div>
+                        <div class="form-row">
+                            <label>ご来店日<span class="required">必須</span></label>
+                            <input type="date" name="visit_date" required>
+                        </div>
+                    </div>
+
+                    <!-- 撮影範囲 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">02</span>
+                        撮影の範囲 <span class="form-section-en">Scope of Photography</span>
+                    </div>
+                    <p class="form-section-desc">撮影を許可される範囲をお選びください。</p>
+
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="photo_scope" value="ok_all" required>
+                            <span class="radio-label">施術部位の撮影を許可する（目元アップ・ヘアスタイル等）</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="photo_scope" value="ok_partial">
+                            <span class="radio-label">施術部位の撮影のみ許可する（顔全体が映らないアングルに限る）</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="photo_scope" value="ng">
+                            <span class="radio-label">撮影を希望しない</span>
+                        </label>
+                    </div>
+
+                    <!-- 掲載範囲 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">03</span>
+                        掲載の範囲 <span class="form-section-en">Usage Scope</span>
+                    </div>
+                    <p class="form-section-desc">撮影した写真の掲載先として許可いただける範囲をお選びください（複数選択可）。</p>
+
+                    <div class="check-group">
+                        <label class="check-item">
+                            <input type="checkbox" name="usage[]" value="instagram">
+                            <span class="check-label">Instagram（@sora_hair_eyelashsalon）への投稿</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="usage[]" value="website">
+                            <span class="check-label">公式Webサイトへの掲載（施術例・ギャラリー等）</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="usage[]" value="line">
+                            <span class="check-label">LINE公式アカウントでの配信</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="usage[]" value="print">
+                            <span class="check-label">店頭POP・チラシ等の印刷物</span>
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" name="usage[]" value="none">
+                            <span class="check-label">いずれの掲載も希望しない（サロン記録のみ）</span>
+                        </label>
+                    </div>
+
+                    <!-- 掲載条件 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">04</span>
+                        掲載時の条件 <span class="form-section-en">Conditions</span>
+                    </div>
+
+                    <div class="agreement-box">
+                        <ul>
+                            <li>掲載にあたり、お客様のお名前・個人を特定できる情報は一切公開いたしません。</li>
+                            <li>掲載は施術メニュー名・仕上がり写真・簡単なコメント（本数・デザイン名等）に限ります。</li>
+                            <li>掲載前にお写真をご確認いただくことも可能です（ご希望の場合はお申し出ください）。</li>
+                            <li>同意はいつでも撤回可能です。撤回のご連絡をいただいた場合、速やかに該当写真を削除いたします。</li>
+                            <li>一度公開された写真が第三者により保存・拡散された場合、完全な削除が困難となる可能性があることをご了承ください。</li>
+                        </ul>
+                    </div>
+
+                    <!-- 同意 -->
+                    <div class="form-section-title">
+                        <span class="form-section-num">05</span>
+                        同意確認 <span class="form-section-en">Agreement</span>
+                    </div>
+
+                    <div class="check-group">
+                        <label class="check-item check-item--agree">
+                            <input type="checkbox" name="agree" value="yes" required>
+                            <span class="check-label"><strong>上記の内容を確認し、選択した範囲での撮影・掲載に同意いたします。</strong></span>
+                        </label>
+                    </div>
+
+                    <!-- 署名欄（印刷用） -->
+                    <div class="signature-area print-only">
+                        <div class="signature-row">
+                            <div class="signature-field">
+                                <span class="signature-label">ご署名</span>
+                                <span class="signature-line"></span>
+                            </div>
+                            <div class="signature-field signature-date">
+                                <span class="signature-label">日付</span>
+                                <span class="signature-line"></span>
+                            </div>
+                        </div>
+                        <p class="signature-note">※ 同意の撤回をご希望の場合は、LINE公式アカウントまたは店頭にてお申し出ください。</p>
+                    </div>
+
+                    <div class="form-submit no-print">
+                        <button type="submit" class="btn btn-primary">送信する</button>
+                        <p class="form-note">
+                            ※このフォームは店内タブレットまたは印刷してご使用ください。
+                        </p>
+                        <button type="button" class="btn btn-outline-sage" onclick="window.print()" style="margin-top: 1rem;">
+                            印刷する
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer id="site-footer" class="site-footer"></footer>
+    <script src="main.js"></script>
+</body>
+</html>
