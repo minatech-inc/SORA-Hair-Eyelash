@@ -52,11 +52,11 @@
                     <div class="form-grid-2">
                         <div class="form-row">
                             <label>お名前<span class="required">必須</span></label>
-                            <input type="text" name="name" required placeholder="例：山田 花子">
+                            <input type="text" name="お名前" required placeholder="例：山田 花子">
                         </div>
                         <div class="form-row">
                             <label>ご来店日<span class="required">必須</span></label>
-                            <input type="date" name="visit_date" required>
+                            <input type="date" name="ご来店日" required>
                         </div>
                     </div>
 
@@ -69,15 +69,15 @@
 
                     <div class="radio-group">
                         <label class="radio-item">
-                            <input type="radio" name="photo_scope" value="ok_all" required>
+                            <input type="radio" name="撮影の範囲" value="施術部位の撮影を許可" required>
                             <span class="radio-label">施術部位の撮影を許可する（目元アップ・ヘアスタイル等）</span>
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="photo_scope" value="ok_partial">
+                            <input type="radio" name="撮影の範囲" value="部位のみ許可（顔全体NG）">
                             <span class="radio-label">施術部位の撮影のみ許可する（顔全体が映らないアングルに限る）</span>
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="photo_scope" value="ng">
+                            <input type="radio" name="撮影の範囲" value="撮影を希望しない">
                             <span class="radio-label">撮影を希望しない</span>
                         </label>
                     </div>
@@ -91,23 +91,23 @@
 
                     <div class="check-group">
                         <label class="check-item">
-                            <input type="checkbox" name="usage[]" value="instagram">
+                            <input type="checkbox" name="掲載先" value="Instagram">
                             <span class="check-label">Instagram（@sora_hair_eyelashsalon）への投稿</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="usage[]" value="website">
+                            <input type="checkbox" name="掲載先" value="公式Webサイト">
                             <span class="check-label">公式Webサイトへの掲載（施術例・ギャラリー等）</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="usage[]" value="line">
+                            <input type="checkbox" name="掲載先" value="LINE公式アカウント">
                             <span class="check-label">LINE公式アカウントでの配信</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="usage[]" value="print">
+                            <input type="checkbox" name="掲載先" value="店頭POP/チラシ">
                             <span class="check-label">店頭POP・チラシ等の印刷物</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="usage[]" value="none">
+                            <input type="checkbox" name="掲載先" value="掲載不可（サロン記録のみ）">
                             <span class="check-label">いずれの掲載も希望しない（サロン記録のみ）</span>
                         </label>
                     </div>
@@ -136,7 +136,7 @@
 
                     <div class="check-group">
                         <label class="check-item check-item--agree">
-                            <input type="checkbox" name="agree" value="yes" required>
+                            <input type="checkbox" name="同意" value="同意する" required>
                             <span class="check-label"><strong>上記の内容を確認し、選択した範囲での撮影・掲載に同意いたします。</strong></span>
                         </label>
                     </div>

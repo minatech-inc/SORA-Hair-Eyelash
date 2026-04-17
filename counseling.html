@@ -53,31 +53,31 @@
                     <div class="form-grid-2">
                         <div class="form-row">
                             <label>お名前（フルネーム）<span class="required">必須</span></label>
-                            <input type="text" name="name" required placeholder="例：山田 花子">
+                            <input type="text" name="お名前" required placeholder="例：山田 花子">
                         </div>
                         <div class="form-row">
                             <label>フリガナ<span class="required">必須</span></label>
-                            <input type="text" name="name_kana" required placeholder="例：ヤマダ ハナコ">
+                            <input type="text" name="フリガナ" required placeholder="例：ヤマダ ハナコ">
                         </div>
                     </div>
                     <div class="form-grid-2">
                         <div class="form-row">
                             <label>お電話番号<span class="required">必須</span></label>
-                            <input type="tel" name="tel" required placeholder="例：090-1234-5678">
+                            <input type="tel" name="お電話番号" required placeholder="例：090-1234-5678">
                         </div>
                         <div class="form-row">
                             <label>メールアドレス</label>
-                            <input type="email" name="email" placeholder="例：hanako@example.com">
+                            <input type="email" name="メールアドレス" placeholder="例：hanako@example.com">
                         </div>
                     </div>
                     <div class="form-grid-2">
                         <div class="form-row">
                             <label>生年月日</label>
-                            <input type="date" name="birthday">
+                            <input type="date" name="生年月日">
                         </div>
                         <div class="form-row">
                             <label>ご来店日</label>
-                            <input type="date" name="visit_date">
+                            <input type="date" name="ご来店日">
                         </div>
                     </div>
 
@@ -92,46 +92,46 @@
 
                     <div class="check-group">
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="eye_disease">
+                            <input type="checkbox" name="健康状態" value="眼科通院中/目の疾患あり">
                             <span class="check-label">現在、眼科に通院中 または 目の疾患がある（結膜炎・ものもらい・ドライアイ等）</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="allergy">
+                            <input type="checkbox" name="健康状態" value="アレルギー体質">
                             <span class="check-label">アレルギー体質である（金属・ラテックス・食物・花粉等）</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="skin_sensitive">
+                            <input type="checkbox" name="健康状態" value="敏感肌/アトピー">
                             <span class="check-label">敏感肌・アトピー性皮膚炎がある</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="eye_surgery">
+                            <input type="checkbox" name="健康状態" value="目の手術歴あり">
                             <span class="check-label">過去に目の手術を受けたことがある（レーシック・二重整形等）</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="pregnant">
+                            <input type="checkbox" name="健康状態" value="妊娠中/授乳中">
                             <span class="check-label">妊娠中 または 授乳中である</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="medication">
+                            <input type="checkbox" name="健康状態" value="服用中の薬あり">
                             <span class="check-label">現在、服用中のお薬がある</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="glaucoma_drops">
+                            <input type="checkbox" name="健康状態" value="まつ毛美容液/緑内障点眼薬使用中">
                             <span class="check-label">まつ毛美容液・緑内障点眼薬を使用中</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="contact">
+                            <input type="checkbox" name="健康状態" value="コンタクトレンズ使用">
                             <span class="check-label">コンタクトレンズを使用している</span>
                         </label>
                         <label class="check-item">
-                            <input type="checkbox" name="health[]" value="none">
+                            <input type="checkbox" name="健康状態" value="該当なし">
                             <span class="check-label">上記いずれにも該当しない</span>
                         </label>
                     </div>
 
                     <div class="form-row">
                         <label>該当がある場合、詳細をご記入ください</label>
-                        <textarea name="health_detail" rows="3" placeholder="例：花粉症あり（春季）、ハードコンタクト使用中、レーシック2020年に実施 等"></textarea>
+                        <textarea name="健康状態の詳細" rows="3" placeholder="例：花粉症あり（春季）、ハードコンタクト使用中、レーシック2020年に実施 等"></textarea>
                     </div>
 
                     <!-- まつ毛エクステ経験 -->
@@ -142,22 +142,22 @@
 
                     <div class="radio-group">
                         <label class="radio-item">
-                            <input type="radio" name="ext_exp" value="first" required>
+                            <input type="radio" name="エクステ経験" value="初めて" required>
                             <span class="radio-label">初めて</span>
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="ext_exp" value="few">
+                            <input type="radio" name="エクステ経験" value="2〜3回程度">
                             <span class="radio-label">2〜3回程度</span>
                         </label>
                         <label class="radio-item">
-                            <input type="radio" name="ext_exp" value="regular">
+                            <input type="radio" name="エクステ経験" value="定期的に通っている">
                             <span class="radio-label">定期的に通っている</span>
                         </label>
                     </div>
 
                     <div class="form-row">
                         <label>過去にトラブルがあった場合はご記入ください</label>
-                        <textarea name="ext_trouble" rows="2" placeholder="例：グルーでかゆみが出た、目が赤くなった 等"></textarea>
+                        <textarea name="過去のトラブル" rows="2" placeholder="例：グルーでかゆみが出た、目が赤くなった 等"></textarea>
                     </div>
 
                     <!-- 施術のご希望 -->
@@ -168,7 +168,7 @@
 
                     <div class="form-row">
                         <label>ご希望メニュー</label>
-                        <select name="menu">
+                        <select name="ご希望メニュー">
                             <option value="">選択してください</option>
                             <optgroup label="まつ毛エクステ">
                                 <option>ナチュラル 80本</option>
@@ -210,23 +210,23 @@
                         <label>仕上がりイメージのご希望</label>
                         <div class="check-group">
                             <label class="check-item">
-                                <input type="checkbox" name="style[]" value="natural">
+                                <input type="checkbox" name="仕上がりイメージ" value="ナチュラル">
                                 <span class="check-label">ナチュラル（自まつ毛に馴染む）</span>
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="style[]" value="cute">
+                                <input type="checkbox" name="仕上がりイメージ" value="キュート">
                                 <span class="check-label">キュート（丸みのある目元）</span>
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="style[]" value="elegant">
+                                <input type="checkbox" name="仕上がりイメージ" value="エレガント">
                                 <span class="check-label">エレガント（目尻長めで切れ長に）</span>
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="style[]" value="gorgeous">
+                                <input type="checkbox" name="仕上がりイメージ" value="ゴージャス">
                                 <span class="check-label">ゴージャス（しっかりボリューム）</span>
                             </label>
                             <label class="check-item">
-                                <input type="checkbox" name="style[]" value="consult">
+                                <input type="checkbox" name="仕上がりイメージ" value="スタッフと相談">
                                 <span class="check-label">スタッフと相談して決めたい</span>
                             </label>
                         </div>
@@ -234,7 +234,7 @@
 
                     <div class="form-row">
                         <label>その他ご要望・気になること</label>
-                        <textarea name="requests" rows="3" placeholder="例：仕事柄あまり派手にできない、左右のバランスが気になる、参考画像あり 等"></textarea>
+                        <textarea name="その他ご要望" rows="3" placeholder="例：仕事柄あまり派手にできない、左右のバランスが気になる、参考画像あり 等"></textarea>
                     </div>
 
                     <!-- 同意事項 -->
@@ -257,7 +257,7 @@
 
                     <div class="check-group" style="margin-top: 1.5rem;">
                         <label class="check-item check-item--agree">
-                            <input type="checkbox" name="agree" value="yes" required>
+                            <input type="checkbox" name="同意" value="同意する" required>
                             <span class="check-label"><strong>上記の内容を確認し、同意いたします。</strong></span>
                         </label>
                     </div>
