@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /contact-thanks.html
+Disallow: /counseling-thanks.html
+Disallow: /consent-thanks.html
+Disallow: /photo-consent.html
+Disallow: /reservation/
+
+Sitemap: https://sora.minatech1210.com/sitemap.xml
