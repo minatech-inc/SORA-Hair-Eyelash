@@ -1,0 +1,13 @@
+name = "sora-counseling-worker"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# 環境変数（公開しても問題ないもの）
+[vars]
+# 顧客カルテDB ID は公開しても問題ないが、シークレット化しても良い
+# CUSTOMER_DB_ID = "352328a1-4fb4-813c-b456-edb3db121df3"
+
+# シークレットは wrangler secret put NOTION_TOKEN で個別に設定
+# 設定が必要なシークレット:
+#   NOTION_TOKEN
+#   CUSTOMER_DB_ID (オプション。vars でも可)

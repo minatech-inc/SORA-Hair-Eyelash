@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>顧客カルテ Notionモックアップ | SORA</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', 'Noto Sans JP', -apple-system, sans-serif;
+            background: #fff;
+            color: #37352f;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .layout { display: flex; min-height: 100vh; }
+
+        /* ===== Sidebar ===== */
+        .sidebar {
+            width: 240px;
+            background: #f7f6f3;
+            border-right: 1px solid #ededec;
+            padding: 12px 8px;
+            overflow-y: auto;
+        }
+        .ws-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 12px;
+        }
+        .ws-header:hover { background: rgba(55,53,47,0.08); }
+        .ws-icon {
+            width: 24px; height: 24px;
+            border-radius: 4px;
+            background: linear-gradient(135deg, #8fa085, #667a5d);
+            display: flex; align-items: center; justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .ws-name { font-weight: 600; font-size: 14px; }
+        .ws-name-sub { color: #9b9a97; font-size: 12px; }
+
+        .nav-section { margin-bottom: 4px; }
+        .nav-item {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #37352f;
+            font-size: 14px;
+        }
+        .nav-item:hover { background: rgba(55,53,47,0.08); }
+        .nav-item.active { background: rgba(55,53,47,0.08); font-weight: 500; }
+        .nav-icon { font-size: 16px; flex-shrink: 0; }
+        .nav-label { flex: 1; }
+        .nav-arrow { font-size: 10px; color: #9b9a97; }
+
+        .nav-section-label {
+            color: #9b9a97;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 14px 8px 4px;
+        }
+
+        /* ===== Main ===== */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 50px;
+            border-bottom: 1px solid #ededec;
+            font-size: 13px;
+            color: #9b9a97;
+        }
+        .topbar a { color: #9b9a97; cursor: pointer; }
+        .topbar a:hover { color: #37352f; }
+        .topbar-sep { color: #c1c0bc; }
+
+        .page-content {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 60px 50px 100px;
+        }
+
+        /* ===== View Tabs ===== */
+        .view-tabs {
+            display: flex;
+            border-bottom: 1px solid #ededec;
+            padding: 0 50px;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .view-tab {
+            padding: 8px 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+            color: #9b9a97;
+            border-bottom: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .view-tab.active {
+            color: #37352f;
+            border-bottom-color: #37352f;
+            font-weight: 500;
+        }
+
+        /* ===== Page 1: Database View ===== */
+        .page-icon {
+            font-size: 60px;
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+        .page-title {
+            font-size: 40px;
+            font-weight: 700;
+            color: #37352f;
+            margin-bottom: 24px;
+            letter-spacing: -0.01em;
+        }
+        .page-desc {
+            color: #9b9a97;
+            margin-bottom: 32px;
+            font-size: 14px;
+        }
+
+        .db-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #ededec;
+            margin-bottom: 8px;
+        }
+        .db-tabs { display: flex; gap: 4px; }
+        .db-tab {
+            padding: 4px 8px;
+            font-size: 13px;
+            color: #9b9a97;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .db-tab.active {
+            background: rgba(55,53,47,0.08);
+            color: #37352f;
+            font-weight: 500;
+        }
+        .db-actions { display: flex; gap: 4px; align-items: center; font-size: 13px; color: #9b9a97; }
+        .db-btn {
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .db-btn:hover { background: rgba(55,53,47,0.08); }
+        .new-btn {
+            background: #2383e2;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        /* Table */
+        .db-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .db-table th {
+            text-align: left;
+            padding: 6px 8px;
+            color: #9b9a97;
+            font-weight: 500;
+            font-size: 12px;
+            border-bottom: 1px solid #ededec;
+            white-space: nowrap;
+        }
+        .db-table td {
+            padding: 7px 8px;
+            border-bottom: 1px solid #ededec;
+            vertical-align: middle;
+        }
+        .db-table tr:hover td { background: #f7f6f3; cursor: pointer; }
+        .col-icon { width: 24px; }
+
+        .name-cell { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+        .avatar {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fce5e5, #f8b8b8);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #c94f4f;
+            font-size: 11px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        .avatar.green { background: linear-gradient(135deg, #e8eee0, #b3c4a8); color: #667a5d; }
+        .avatar.brown { background: linear-gradient(135deg, #f0e5d4, #d4b896); color: #9a7f62; }
+        .avatar.blue  { background: linear-gradient(135deg, #d8e5f5, #a4c2e8); color: #4a6e9b; }
+        .avatar.purple { background: linear-gradient(135deg, #ebdcf3, #c8a4d9); color: #8b5b9b; }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            background: #e8eee0;
+            color: #4d6042;
+            font-weight: 500;
+            margin-right: 4px;
+        }
+        .tag.cute { background: #fce5e5; color: #b85c5c; }
+        .tag.elegant { background: #ebdcf3; color: #7a5494; }
+        .tag.gorgeous { background: #f5e0c8; color: #a36c2e; }
+        .tag.repair { background: #e0eaf5; color: #4a6e9b; }
+        .tag.allergy { background: #fce5e5; color: #b85c5c; }
+        .tag.contact { background: #fff4d4; color: #8a6d20; }
+
+        .star { color: #d3a845; }
+        .star-empty { color: #d3ccb9; }
+
+        /* ===== Page 2: Customer Detail ===== */
+        .detail-page { display: none; }
+        .detail-page.active { display: block; }
+        .db-page { display: block; }
+        .db-page.hidden { display: none; }
+
+        .customer-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .customer-avatar {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #fce5e5, #f8b8b8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c94f4f;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .customer-name {
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .customer-name-sub {
+            color: #9b9a97;
+            font-size: 14px;
+        }
+
+        .property-list {
+            margin: 24px 0 32px;
+            border-top: 1px solid #ededec;
+        }
+        .property-row {
+            display: flex;
+            padding: 6px 0;
+            font-size: 14px;
+        }
+        .property-key {
+            width: 200px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #9b9a97;
+        }
+        .property-value { flex: 1; color: #37352f; }
+        .property-icon { font-size: 14px; }
+
+        .callout {
+            display: flex;
+            gap: 12px;
+            padding: 16px 16px 16px 12px;
+            background: #fce5e5;
+            border-radius: 4px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+        .callout-icon { font-size: 20px; line-height: 1.2; }
+        .callout-content { flex: 1; }
+        .callout-title { font-weight: 600; margin-bottom: 4px; }
+        .callout.green { background: #e8eee0; }
+        .callout.yellow { background: #fff4d4; }
+
+        h2.section-h { font-size: 24px; font-weight: 700; margin: 32px 0 12px; }
+        h3.section-h3 { font-size: 18px; font-weight: 600; margin: 24px 0 8px; }
+
+        /* Treatment cards */
+        .treatment-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .treatment-card {
+            border: 1px solid #ededec;
+            border-radius: 4px;
+            padding: 16px;
+            transition: background 0.15s;
+        }
+        .treatment-card:hover { background: #f7f6f3; cursor: pointer; }
+        .treatment-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .treatment-date {
+            font-size: 13px;
+            color: #9b9a97;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .treatment-staff {
+            font-size: 12px;
+            color: #9b9a97;
+        }
+        .treatment-menu {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .treatment-photos {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            margin: 8px 0 12px;
+        }
+        .photo-thumb {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            background-size: cover;
+            background-position: center;
+            background-color: #ededec;
+        }
+        .photo-label {
+            font-size: 11px;
+            color: #9b9a97;
+            margin-top: 2px;
+        }
+        .photo-cell { text-align: center; }
+        .treatment-memo {
+            background: #f7f6f3;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #4a4842;
+            line-height: 1.7;
+        }
+        .treatment-memo-label {
+            font-size: 11px;
+            color: #9b9a97;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+
+        .add-row {
+            color: #9b9a97;
+            font-size: 13px;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .add-row:hover { background: #f7f6f3; color: #37352f; }
+
+        /* photo gradients (placeholder images) */
+        .ph-1 { background: linear-gradient(135deg, #d4a574, #8b6f4e); }
+        .ph-2 { background: linear-gradient(135deg, #c8a890, #a08070); }
+        .ph-3 { background: linear-gradient(135deg, #8b6f4e, #5e4a33); }
+        .ph-4 { background: linear-gradient(135deg, #f5e0c8, #d4a574); }
+        .ph-5 { background: linear-gradient(135deg, #6b5641, #3d2f23); }
+        .ph-6 { background: linear-gradient(135deg, #d4b896, #8b7860); }
+
+        /* Note banner */
+        .demo-banner {
+            background: linear-gradient(90deg, #8fa085 0%, #667a5d 100%);
+            color: white;
+            padding: 8px 20px;
+            font-size: 12px;
+            text-align: center;
+            letter-spacing: 0.05em;
+        }
+        .demo-banner strong { font-weight: 600; }
+    </style>
+</head>
+<body>
+    <div class="demo-banner">
+        <strong>📌 これはNotionで構築する顧客カルテのUIモックアップです</strong> — タブ切替で「データベース」⇔「個別カルテ」を確認できます
+    </div>
+
+    <div class="layout">
+        <!-- ===== Sidebar ===== -->
+        <aside class="sidebar">
+            <div class="ws-header">
+                <div class="ws-icon">S</div>
+                <div>
+                    <div class="ws-name">SORA Salon</div>
+                    <div class="ws-name-sub">karakida.honoka@...</div>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-item"><span class="nav-icon">🔍</span><span class="nav-label">検索</span></div>
+                <div class="nav-item"><span class="nav-icon">🏠</span><span class="nav-label">ホーム</span></div>
+                <div class="nav-item"><span class="nav-icon">📥</span><span class="nav-label">受信トレイ</span></div>
+            </div>
+
+            <div class="nav-section-label">ワークスペース</div>
+            <div class="nav-section">
+                <div class="nav-item active">
+                    <span class="nav-arrow">▾</span>
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">顧客カルテ</span>
+                </div>
+                <div class="nav-item" style="padding-left: 28px;">
+                    <span class="nav-icon">📋</span>
+                    <span class="nav-label">カウンセリング受信</span>
+                </div>
+                <div class="nav-item" style="padding-left: 28px;">
+                    <span class="nav-icon">📸</span>
+                    <span class="nav-label">施術記録</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-arrow">▸</span>
+                    <span class="nav-icon">📅</span>
+                    <span class="nav-label">予約管理</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-arrow">▸</span>
+                    <span class="nav-icon">💰</span>
+                    <span class="nav-label">売上管理</span>
+                </div>
+                <div class="nav-item">
+                    <span class="nav-arrow">▸</span>
+                    <span class="nav-icon">📝</span>
+                    <span class="nav-label">スタッフメモ</span>
+                </div>
+            </div>
+
+            <div class="nav-section-label">テンプレート</div>
+            <div class="nav-section">
+                <div class="nav-item"><span class="nav-icon">✨</span><span class="nav-label">新規顧客追加</span></div>
+                <div class="nav-item"><span class="nav-icon">🌿</span><span class="nav-label">来店記録テンプレ</span></div>
+            </div>
+        </aside>
+
+        <!-- ===== Main ===== -->
+        <main class="main">
+            <!-- Tabs -->
+            <div class="view-tabs">
+                <button class="view-tab active" id="tab-db" onclick="showDB()">
+                    <span>📋</span> データベース全体
+                </button>
+                <button class="view-tab" id="tab-detail" onclick="showDetail()">
+                    <span>👤</span> 個別カルテ（山田 花子様）
+                </button>
+            </div>
+
+            <!-- ===== Page 1: Database View ===== -->
+            <div class="db-page" id="db-page">
+                <div class="topbar">
+                    <a>SORA Salon</a>
+                    <span class="topbar-sep">/</span>
+                    <a>👥 顧客カルテ</a>
+                </div>
+
+                <div class="page-content">
+                    <div class="page-icon">👥</div>
+                    <h1 class="page-title">顧客カルテ</h1>
+                    <p class="page-desc">SORA - HAIR & EYELASH - のお客様データベース。来店履歴・施術写真・健康情報を一元管理。</p>
+
+                    <div class="db-toolbar">
+                        <div class="db-tabs">
+                            <div class="db-tab active"><span>📋</span> 全顧客</div>
+                            <div class="db-tab"><span>⭐</span> 常連様</div>
+                            <div class="db-tab"><span>🌱</span> 新規</div>
+                            <div class="db-tab"><span>📸</span> ギャラリー</div>
+                            <div class="db-tab" style="color: #c1c0bc;">＋</div>
+                        </div>
+                        <div class="db-actions">
+                            <span class="db-btn">フィルタ</span>
+                            <span class="db-btn">並び替え</span>
+                            <span class="db-btn">⋯</span>
+                            <span class="db-btn new-btn">＋ 新規</span>
+                        </div>
+                    </div>
+
+                    <table class="db-table">
+                        <thead>
+                            <tr>
+                                <th>👤 お名前</th>
+                                <th>📅 最終来店</th>
+                                <th>🌿 直近メニュー</th>
+                                <th>🏷️ タグ</th>
+                                <th>⭐ 来店回数</th>
+                                <th>📸 写真</th>
+                                <th>📞 連絡先</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr onclick="showDetail()">
+                                <td><div class="name-cell"><span class="avatar">山</span>山田 花子</div></td>
+                                <td>2026/04/15</td>
+                                <td><span class="tag cute">キュート 100本</span></td>
+                                <td><span class="tag allergy">花粉症</span><span class="tag contact">コンタクト</span></td>
+                                <td><span class="star">★★★★</span><span class="star-empty">★</span></td>
+                                <td>📷 8枚</td>
+                                <td>090-1234-5678</td>
+                            </tr>
+                            <tr>
+                                <td><div class="name-cell"><span class="avatar green">佐</span>佐藤 美咲</div></td>
+                                <td>2026/04/10</td>
+                                <td><span class="tag elegant">エレガント 120本</span></td>
+                                <td>—</td>
+                                <td><span class="star">★★</span><span class="star-empty">★★★</span></td>
+                                <td>📷 4枚</td>
+                                <td>080-2345-6789</td>
+                            </tr>
+                            <tr>
+                                <td><div class="name-cell"><span class="avatar brown">高</span>高橋 結衣</div></td>
+                                <td>2026/04/08</td>
+                                <td><span class="tag gorgeous">ゴージャス 140本</span></td>
+                                <td><span class="tag allergy">敏感肌</span></td>
+                                <td><span class="star">★★★★★</span></td>
+                                <td>📷 12枚</td>
+                                <td>070-3456-7890</td>
+                            </tr>
+                            <tr>
+                                <td><div class="name-cell"><span class="avatar blue">田</span>田中 さくら</div></td>
+                                <td>2026/04/05</td>
+                                <td><span class="tag repair">リペア 60本</span></td>
+                                <td>—</td>
+                                <td><span class="star">★★★</span><span class="star-empty">★★</span></td>
+                                <td>📷 3枚</td>
+                                <td>090-4567-8901</td>
+                            </tr>
+                            <tr>
+                                <td><div class="name-cell"><span class="avatar purple">鈴</span>鈴木 あかり</div></td>
+                                <td>2026/03/28</td>
+                                <td><span class="tag">ナチュラル 80本</span></td>
+                                <td><span class="tag contact">ハードコンタクト</span></td>
+                                <td><span class="star">★</span><span class="star-empty">★★★★</span></td>
+                                <td>📷 2枚</td>
+                                <td>080-5678-9012</td>
+                            </tr>
+                            <tr>
+                                <td><div class="name-cell"><span class="avatar">伊</span>伊藤 みのり</div></td>
+                                <td>2026/03/22</td>
+                                <td><span class="tag">パリジェンヌリフト</span></td>
+                                <td>—</td>
+                                <td><span class="star">★★</span><span class="star-empty">★★★</span></td>
+                                <td>📷 4枚</td>
+                                <td>090-6789-0123</td>
+                            </tr>
+                            <tr><td colspan="7"><div class="add-row">＋ 新規追加</div></td></tr>
+                        </tbody>
+                    </table>
+
+                    <p class="page-desc" style="margin-top: 32px; font-size: 13px;">
+                        合計 6 人　·　行をクリックすると個別カルテに遷移
+                    </p>
+                </div>
+            </div>
+
+            <!-- ===== Page 2: Detail Page ===== -->
+            <div class="detail-page" id="detail-page">
+                <div class="topbar">
+                    <a onclick="showDB()">SORA Salon</a>
+                    <span class="topbar-sep">/</span>
+                    <a onclick="showDB()">👥 顧客カルテ</a>
+                    <span class="topbar-sep">/</span>
+                    <a>山田 花子</a>
+                </div>
+
+                <div class="page-content">
+                    <div class="customer-header">
+                        <div class="customer-avatar">山</div>
+                        <div>
+                            <h1 class="customer-name">山田 花子</h1>
+                            <div class="customer-name-sub">ヤマダ ハナコ・1990年生まれ・初来店 2025/11/12</div>
+                        </div>
+                    </div>
+
+                    <!-- Properties -->
+                    <div class="property-list">
+                        <div class="property-row">
+                            <div class="property-key"><span class="property-icon">📞</span>連絡先</div>
+                            <div class="property-value">090-1234-5678</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-key"><span class="property-icon">✉️</span>メール</div>
+                            <div class="property-value">hanako@example.com</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-key"><span class="property-icon">🎂</span>誕生日</div>
+                            <div class="property-value">1990年5月18日</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-key"><span class="property-icon">⭐</span>来店回数</div>
+                            <div class="property-value">4 回</div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-key"><span class="property-icon">🏷️</span>タグ</div>
+                            <div class="property-value">
+                                <span class="tag allergy">花粉症</span>
+                                <span class="tag contact">コンタクト使用</span>
+                            </div>
+                        </div>
+                        <div class="property-row">
+                            <div class="property-key"><span class="property-icon">👤</span>担当スタッフ</div>
+                            <div class="property-value">からきだ ほのか</div>
+                        </div>
+                    </div>
+
+                    <!-- Health alert -->
+                    <div class="callout">
+                        <div class="callout-icon">⚠️</div>
+                        <div class="callout-content">
+                            <div class="callout-title">健康状態・アレルギー</div>
+                            <div>花粉症あり（春季）。施術中はリラックスできるよう室温調整。<br>ハードコンタクト使用中（施術前にケースで保管）。グルーは一般タイプで問題なし（過去3回問題なし）。</div>
+                        </div>
+                    </div>
+
+                    <!-- Preferences -->
+                    <div class="callout green">
+                        <div class="callout-icon">🌿</div>
+                        <div class="callout-content">
+                            <div class="callout-title">お好み・ご要望</div>
+                            <div>仕事柄あまり派手にしたくない。ナチュラルとキュートの中間が好み。目尻長めは避けて、丸みのある仕上がりを希望。</div>
+                        </div>
+                    </div>
+
+                    <h2 class="section-h">📸 施術履歴</h2>
+                    <p class="page-desc">来店ごとの記録（最新が上）</p>
+
+                    <div class="treatment-list">
+
+                        <!-- Visit 4 -->
+                        <div class="treatment-card">
+                            <div class="treatment-header">
+                                <div class="treatment-date">📅 2026/04/15（木）11:00</div>
+                                <div class="treatment-staff">担当: からきだ</div>
+                            </div>
+                            <div class="treatment-menu">キュート 100本（Jカール 11mm 0.15mm）</div>
+                            <div class="treatment-photos">
+                                <div class="photo-cell"><div class="photo-thumb ph-1"></div><div class="photo-label">Before 右</div></div>
+                                <div class="photo-cell"><div class="photo-thumb ph-2"></div><div class="photo-label">Before 左</div></div>
+                                <div class="photo-cell"><div class="photo-thumb ph-3"></div><div class="photo-label">After 右</div></div>
+                                <div class="photo-cell"><div class="photo-thumb ph-4"></div><div class="photo-label">After 左</div></div>
+                            </div>
+                            <div class="treatment-memo">
+                                <div class="treatment-memo-label">📝 スタッフメモ</div>
+                                自まつ毛がやや細めなので11mm中心。次回は目尻側を1mm長めにすると印象的になりそう。新色のカラー(ブラウンmix)に興味あり、次回提案。
+                            </div>
+                        </div>
+
+                        <!-- Visit 3 -->
+                        <div class="treatment-card">
+                            <div class="treatment-header">
+                                <div class="treatment-date">📅 2026/03/01（土）13:30</div>
+                                <div class="treatment-staff">担当: からきだ</div>
+                            </div>
+                            <div class="treatment-menu">キュート 100本（Jカール 10mm）</div>
+                            <div class="treatment-photos">
+                                <div class="photo-cell"><div class="photo-thumb ph-5"></div><div class="photo-label">Before</div></div>
+                                <div class="photo-cell"><div class="photo-thumb ph-6"></div><div class="photo-label">After</div></div>
+                            </div>
+                            <div class="treatment-memo">
+                                <div class="treatment-memo-label">📝 スタッフメモ</div>
+                                持ちは2週間で約70%残存（良好）。仕事の都合で次回は土曜希望。
+                            </div>
+                        </div>
+
+                        <!-- Visit 2 -->
+                        <div class="treatment-card">
+                            <div class="treatment-header">
+                                <div class="treatment-date">📅 2026/01/14（水）10:30</div>
+                                <div class="treatment-staff">担当: からきだ</div>
+                            </div>
+                            <div class="treatment-menu">リペア 〜100本（3週間以内）</div>
+                            <div class="treatment-photos">
+                                <div class="photo-cell"><div class="photo-thumb ph-2"></div><div class="photo-label">Before</div></div>
+                                <div class="photo-cell"><div class="photo-thumb ph-1"></div><div class="photo-label">After</div></div>
+                            </div>
+                            <div class="treatment-memo">
+                                <div class="treatment-memo-label">📝 スタッフメモ</div>
+                                前回から3週間。リペアで十分なボリューム維持。
+                            </div>
+                        </div>
+
+                        <!-- Visit 1 -->
+                        <div class="treatment-card">
+                            <div class="treatment-header">
+                                <div class="treatment-date">📅 2025/11/12（水）14:00 — 初来店</div>
+                                <div class="treatment-staff">担当: からきだ</div>
+                            </div>
+                            <div class="treatment-menu">First Lash（初回限定 キュート 100本）</div>
+                            <div class="treatment-photos">
+                                <div class="photo-cell"><div class="photo-thumb ph-3"></div><div class="photo-label">Before</div></div>
+                                <div class="photo-cell"><div class="photo-thumb ph-4"></div><div class="photo-label">After</div></div>
+                            </div>
+                            <div class="treatment-memo">
+                                <div class="treatment-memo-label">📝 スタッフメモ</div>
+                                初回カウンセリング実施。ナチュラル寄りキュートを希望。仕事柄派手NG。グルーパッチテスト問題なし。
+                            </div>
+                        </div>
+
+                        <div class="add-row">＋ 来店記録を追加</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function showDB() {
+            document.getElementById('db-page').classList.remove('hidden');
+            document.getElementById('detail-page').classList.remove('active');
+            document.getElementById('tab-db').classList.add('active');
+            document.getElementById('tab-detail').classList.remove('active');
+            window.scrollTo({top:0});
+        }
+        function showDetail() {
+            document.getElementById('db-page').classList.add('hidden');
+            document.getElementById('detail-page').classList.add('active');
+            document.getElementById('tab-db').classList.remove('active');
+            document.getElementById('tab-detail').classList.add('active');
+            window.scrollTo({top:0});
+        }
+    </script>
+</body>
+</html>

@@ -292,5 +292,35 @@
 
     <footer id="site-footer" class="site-footer"></footer>
     <script src="main.js"></script>
+
+    <!-- Notion自動転記 (Cloudflare Worker経由) -->
+    <!-- ⚠️ デプロイ後、下のWORKER_URLを実際のURLに書き換えてください -->
+    <script>
+        (function () {
+            // Cloudflare Workerデプロイ後にここを書き換え
+            // 例: 'https://sora-counseling-worker.example.workers.dev'
+            const WORKER_URL = '';
+
+            const form = document.querySelector('.counseling-form');
+            if (!form || !WORKER_URL) return;
+
+            form.addEventListener('submit', function () {
+                // Notion顧客カルテへのバックグラウンド送信（メール送信は引き続きWeb3Forms経由）
+                try {
+                    const formData = new FormData(form);
+                    fetch(WORKER_URL, {
+                        method: 'POST',
+                        body: formData,
+                        keepalive: true
+                    }).catch(function (err) {
+                        console.warn('Notion sync failed:', err);
+                    });
+                } catch (e) {
+                    console.warn('Notion sync exception:', e);
+                }
+                // フォームはWeb3Formsへの通常送信を継続（メール通知＋リダイレクト）
+            });
+        })();
+    </script>
 </body>
 </html>
