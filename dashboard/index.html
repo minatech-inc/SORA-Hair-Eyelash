@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SORA Salon Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">SORA</div>
+            <div class="brand-sub">Salon Dashboard</div>
+        </div>
+        <nav class="nav">
+            <a href="#home" class="nav-item active" data-page="home">
+                <span class="nav-icon">🏠</span><span>ホーム</span>
+            </a>
+            <a href="#sales" class="nav-item" data-page="sales">
+                <span class="nav-icon">📊</span><span>売上</span>
+            </a>
+            <a href="#staff" class="nav-item" data-page="staff">
+                <span class="nav-icon">👥</span><span>スタッフ</span>
+            </a>
+            <a href="#menu" class="nav-item" data-page="menu">
+                <span class="nav-icon">🌿</span><span>メニュー</span>
+            </a>
+            <div class="nav-section">Coming soon</div>
+            <a href="#" class="nav-item disabled">
+                <span class="nav-icon">📅</span><span>勤怠管理</span>
+            </a>
+            <a href="#" class="nav-item disabled">
+                <span class="nav-icon">🧾</span><span>請求書</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <button class="btn-logout" id="btn-logout">ログアウト</button>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+        <header class="topbar">
+            <div class="topbar-title" id="page-title">ホーム</div>
+            <div class="topbar-meta">
+                <span id="last-updated">読み込み中...</span>
+                <button class="btn-refresh" id="btn-refresh" title="再読み込み">↻</button>
+            </div>
+        </header>
+
+        <!-- Login screen -->
+        <div class="login-screen" id="login-screen" style="display:none;">
+            <div class="login-card">
+                <div class="login-brand">SORA</div>
+                <div class="login-sub">Salon Dashboard</div>
+                <h2>ログイン</h2>
+                <p class="login-desc">パスワードを入力してください</p>
+                <form id="login-form">
+                    <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
+                    <button type="submit" class="btn-primary">ログイン</button>
+                    <div class="login-error" id="login-error"></div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading" style="display:none;">
+            <div class="loading-spinner"></div>
+            <div>データ取得中...</div>
+        </div>
+
+        <!-- HOME page -->
+        <section class="page" id="page-home">
+            <!-- KPI cards -->
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">今月の売上</div>
+                    <div class="kpi-value" id="kpi-this-month">¥0</div>
+                    <div class="kpi-diff" id="kpi-diff"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">今月の来店件数</div>
+                    <div class="kpi-value" id="kpi-this-visits">0</div>
+                    <div class="kpi-sub" id="kpi-this-avg"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">年初来累計</div>
+                    <div class="kpi-value" id="kpi-ytd">¥0</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">登録顧客数</div>
+                    <div class="kpi-value" id="kpi-customers">0</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">月別売上推移（直近12ヶ月）</div>
+                    <canvas id="chart-monthly"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">今月の日別売上</div>
+                    <canvas id="chart-daily"></canvas>
+                </div>
+            </div>
+
+            <div class="recent-card">
+                <div class="recent-title">最近の施術記録</div>
+                <table class="recent-table" id="recent-table">
+                    <thead>
+                        <tr>
+                            <th>日時</th>
+                            <th>件名</th>
+                            <th>担当</th>
+                            <th>メニュー</th>
+                            <th class="num">料金</th>
+                            <th>状態</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SALES page -->
+        <section class="page" id="page-sales" style="display:none;">
+            <div class="chart-grid">
+                <div class="chart-card chart-full">
+                    <div class="chart-title">月別売上（直近12ヶ月）</div>
+                    <canvas id="sales-monthly"></canvas>
+                </div>
+                <div class="chart-card chart-full">
+                    <div class="chart-title">日別売上（直近30日）</div>
+                    <canvas id="sales-daily"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- STAFF page -->
+        <section class="page" id="page-staff" style="display:none;">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">スタッフ別売上</div>
+                    <canvas id="staff-bar"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">スタッフ別 件数比率</div>
+                    <canvas id="staff-pie"></canvas>
+                </div>
+            </div>
+            <div class="recent-card">
+                <div class="recent-title">スタッフ別ランキング</div>
+                <table class="recent-table" id="staff-table">
+                    <thead>
+                        <tr>
+                            <th>順位</th>
+                            <th>スタッフ</th>
+                            <th class="num">売上</th>
+                            <th class="num">件数</th>
+                            <th class="num">平均単価</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- MENU page -->
+        <section class="page" id="page-menu" style="display:none;">
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="chart-title">メニュー別売上 TOP10</div>
+                    <canvas id="menu-bar"></canvas>
+                </div>
+                <div class="chart-card">
+                    <div class="chart-title">メニュー別 件数比率 TOP10</div>
+                    <canvas id="menu-pie"></canvas>
+                </div>
+            </div>
+            <div class="recent-card">
+                <div class="recent-title">メニューランキング</div>
+                <table class="recent-table" id="menu-table">
+                    <thead>
+                        <tr>
+                            <th>順位</th>
+                            <th>メニュー</th>
+                            <th class="num">売上</th>
+                            <th class="num">件数</th>
+                            <th class="num">平均単価</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/config.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
