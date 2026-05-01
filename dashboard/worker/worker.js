@@ -108,6 +108,12 @@ export default {
       if (url.pathname === '/api/invoices/staff-list')     return await handleStaffInvoices(request, env, cors);
       if (url.pathname === '/api/invoices/staff-approve')  return await handleInvoiceStaffApprove(request, env, cors);
 
+      // Public HTML invoice (token-based)
+      const htmlMatch = url.pathname.match(/^\/api\/invoices\/([a-f0-9-]{36})\/html$/i);
+      if (htmlMatch) {
+        return await handleInvoiceHtml(htmlMatch[1], url, env);
+      }
+
       return jsonResponse({ status: 'ok', service: 'SORA Dashboard API' }, 200, cors);
     } catch (err) {
       console.error('Worker error:', err);
@@ -913,6 +919,310 @@ async function handleStaffInvoices(request, env, cors) {
   });
   const invoices = (data.results || []).map(r => formatInvoice(r, staffMap));
   return jsonResponse({ invoices, staffName: staff.name }, 200, cors);
+}
+
+// =====================================================
+// Invoice HTML rendering (for Make.com -> PDF conversion)
+// =====================================================
+
+async function handleInvoiceHtml(invoiceId, url, env) {
+  // 認証: ?token=DASHBOARD_PASSWORD で照合
+  const token = url.searchParams.get('token');
+  if (token !== env.DASHBOARD_PASSWORD) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const invoicePage = await notionFetch(env, `/pages/${invoiceId}`);
+  const staffMap = await fetchStaffMap(env);
+  const inv = formatInvoice(invoicePage, staffMap);
+  const staff = staffMap[inv.staffId];
+
+  // バンク情報など追加プロパティを取得
+  const staffPage = staff ? await notionFetch(env, `/pages/${staff.id}`) : null;
+  const bankInfo = staffPage ? (staffPage.properties['振込先']?.rich_text || []).map(t => t.plain_text).join('\n') : '';
+
+  const html = renderInvoiceHtml(inv, staff, bankInfo);
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+    }
+  });
+}
+
+function renderInvoiceHtml(inv, staff, bankInfo) {
+  const fmtYen = (n) => '¥' + Number(n || 0).toLocaleString('ja-JP');
+  const fmtDate = (s) => {
+    if (!s) return '-';
+    const d = new Date(s);
+    return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+  };
+
+  return `<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>${inv.invoiceNo}</title>
+<style>
+@page { size: A4; margin: 20mm; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Noto Serif JP', 'Yu Mincho', '游明朝', serif;
+  color: #2c2419;
+  line-height: 1.6;
+  font-size: 12pt;
+  background: white;
+  padding: 30mm 20mm;
+}
+.invoice-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+  background: white;
+}
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 2px solid #6b5641;
+  padding-bottom: 16px;
+  margin-bottom: 32px;
+}
+.title-block h1 {
+  font-size: 28pt;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #6b5641;
+  margin-bottom: 4px;
+}
+.title-block .sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11pt;
+  letter-spacing: 0.3em;
+  color: #8fa085;
+  text-transform: uppercase;
+}
+.meta-block {
+  text-align: right;
+  font-size: 10pt;
+  color: #4d493f;
+}
+.meta-block .invoice-no {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 13pt;
+  letter-spacing: 0.05em;
+  color: #6b5641;
+  margin-bottom: 6px;
+}
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  margin-bottom: 28px;
+}
+.party-block {
+  font-size: 10pt;
+}
+.party-label {
+  font-size: 9pt;
+  color: #8f8a7c;
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+.party-name {
+  font-size: 14pt;
+  color: #6b5641;
+  margin-bottom: 8px;
+  letter-spacing: 0.05em;
+}
+.party-info {
+  font-size: 9.5pt;
+  color: #4d493f;
+  line-height: 1.7;
+  white-space: pre-line;
+}
+.summary-card {
+  background: #faf7ef;
+  border: 1px solid #e9e4d5;
+  border-radius: 8px;
+  padding: 22px 28px;
+  margin-bottom: 28px;
+}
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 10.5pt;
+}
+.summary-row.total {
+  border-top: 1px solid #c9bba0;
+  margin-top: 12px;
+  padding-top: 16px;
+  font-size: 13pt;
+  font-weight: 500;
+  color: #6b5641;
+}
+.summary-row .num {
+  font-family: 'Cormorant Garamond', serif;
+}
+.detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 28px;
+  font-size: 10pt;
+}
+.detail-table th, .detail-table td {
+  padding: 10px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e9e4d5;
+}
+.detail-table th {
+  background: #f4f1e9;
+  color: #4d493f;
+  font-size: 9pt;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+}
+.detail-table td.num {
+  text-align: right;
+  font-family: 'Cormorant Garamond', serif;
+  color: #6b5641;
+}
+.bank-section {
+  background: #faf7ef;
+  border-left: 3px solid #8fa085;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  font-size: 10pt;
+  white-space: pre-line;
+}
+.bank-section .label {
+  font-size: 9pt;
+  color: #8f8a7c;
+  letter-spacing: 0.15em;
+  margin-bottom: 6px;
+}
+.notes {
+  font-size: 9pt;
+  color: #8f8a7c;
+  margin-bottom: 24px;
+  line-height: 1.8;
+}
+.footer {
+  margin-top: 40px;
+  text-align: center;
+  font-size: 9pt;
+  color: #8f8a7c;
+  letter-spacing: 0.1em;
+  border-top: 1px solid #e9e4d5;
+  padding-top: 16px;
+}
+.footer .brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 11pt;
+  letter-spacing: 0.3em;
+  color: #6b5641;
+  margin-bottom: 4px;
+}
+</style>
+</head>
+<body>
+<div class="invoice-wrap">
+
+  <div class="header">
+    <div class="title-block">
+      <h1>請求書</h1>
+      <div class="sub">Invoice</div>
+    </div>
+    <div class="meta-block">
+      <div class="invoice-no">${escapeHtml(inv.invoiceNo)}</div>
+      <div>発行日: ${fmtDate(inv.closingDate)}</div>
+      <div>支払期日: ${fmtDate(inv.paymentDueDate)}</div>
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="party-block">
+      <div class="party-label">請求先</div>
+      <div class="party-name">MinaTech 株式会社 御中</div>
+      <div class="party-info">SORA - HAIR &amp; EYELASH -
+〒253-0055
+神奈川県茅ヶ崎市中海岸1丁目2-43
+サザンマンションB棟 2F</div>
+    </div>
+    <div class="party-block" style="text-align:right;">
+      <div class="party-label">請求者</div>
+      <div class="party-name">${escapeHtml(staff?.name || '')}</div>
+    </div>
+  </div>
+
+  <div class="summary-card">
+    <div class="summary-row">
+      <span>対象期間</span>
+      <span>${fmtDate(inv.periodStart)} 〜 ${fmtDate(inv.periodEnd)}</span>
+    </div>
+    <div class="summary-row">
+      <span>件数</span>
+      <span class="num">${inv.visitCount} 件</span>
+    </div>
+    <div class="summary-row total">
+      <span>ご請求金額（税込）</span>
+      <span class="num">${fmtYen(inv.feeAmount)}</span>
+    </div>
+  </div>
+
+  <table class="detail-table">
+    <thead>
+      <tr>
+        <th>項目</th>
+        <th style="text-align:right;">金額</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>施術売上合計（税抜）</td>
+        <td class="num">${fmtYen(inv.salesExclTax)}</td>
+      </tr>
+      <tr>
+        <td>${Math.round((inv.commissionRate || 0) * 100)}% 報酬</td>
+        <td class="num">${fmtYen(inv.feeAmount)}</td>
+      </tr>
+      <tr style="background:#faf7ef;">
+        <td><strong>合計（税込）</strong></td>
+        <td class="num"><strong>${fmtYen(inv.feeAmount)}</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  ${bankInfo ? `
+  <div class="bank-section">
+    <div class="label">お振込先</div>
+    ${escapeHtml(bankInfo)}
+  </div>
+  ` : ''}
+
+  <div class="notes">
+    ※本請求書は完全歩合契約に基づく報酬請求書です。<br>
+    ※税抜売上の${Math.round((inv.commissionRate || 0) * 100)}%を報酬として請求しております。<br>
+    ${inv.note ? '※' + escapeHtml(inv.note) + '<br>' : ''}
+  </div>
+
+  <div class="footer">
+    <div class="brand">SORA - HAIR &amp; EYELASH -</div>
+    <div>本書面に関するお問い合わせは MinaTech株式会社 までご連絡ください</div>
+  </div>
+
+</div>
+</body>
+</html>`;
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 // =====================================================

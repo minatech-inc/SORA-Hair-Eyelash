@@ -512,6 +512,14 @@
                 const action = b.dataset.action;
                 const id = b.dataset.id;
                 try {
+                    if (action === 'preview') {
+                        // プレビューURL（パスワード必要）
+                        const pw = prompt('プレビューするにはダッシュボードパスワードを入力してください');
+                        if (!pw) return;
+                        const url = `${CONFIG.API_BASE}/api/invoices/${id}/html?token=${encodeURIComponent(pw)}`;
+                        window.open(url, '_blank');
+                        return;
+                    }
                     if (action === 'approve') {
                         if (!confirm('オーナー承認します。よろしいですか？')) return;
                         await API.invoiceOwnerApprove(id);
@@ -546,6 +554,8 @@
 
     function invoiceActions(i) {
         const buttons = [];
+        // プレビュー（常に表示）
+        buttons.push(`<button class="invoice-action-btn" data-action="preview" data-id="${i.id}">PDFプレビュー</button>`);
         if (i.status === 'オーナー承認待ち') {
             buttons.push(`<button class="invoice-action-btn primary" data-action="approve" data-id="${i.id}">承認</button>`);
             buttons.push(`<button class="invoice-action-btn danger" data-action="reject" data-id="${i.id}">却下</button>`);
