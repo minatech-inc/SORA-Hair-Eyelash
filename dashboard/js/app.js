@@ -559,11 +559,13 @@
     async function renderStaffInvoiceFlow() {
         const data = await API.staffList();
         const container = document.getElementById('invoice-staff-buttons');
-        if (!data.staff || data.staff.length === 0) {
-            container.innerHTML = '<div class="loading-text">スタッフが登録されていません</div>';
+        // 請求書対象のスタッフのみ表示
+        const eligible = (data.staff || []).filter(s => s.invoiceTarget);
+        if (eligible.length === 0) {
+            container.innerHTML = '<div class="loading-text">請求書対象スタッフが登録されていません</div>';
             return;
         }
-        container.innerHTML = data.staff.map(s => `
+        container.innerHTML = eligible.map(s => `
             <button class="staff-button" data-staff-id="${s.id}" data-staff-name="${escapeHtml(s.name)}">
                 <div class="staff-button-name">${escapeHtml(s.name)}</div>
                 <div class="staff-button-role">${escapeHtml(s.role || '')}</div>

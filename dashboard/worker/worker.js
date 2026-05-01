@@ -194,7 +194,7 @@ async function fetchMenuLookup(env) {
 }
 
 async function fetchStaffMap(env) {
-  /** id -> {id, name, role, pin, hourlyRate, salaryType, commissionRate, active, displayOrder} */
+  /** id -> {id, name, role, pin, hourlyRate, salaryType, commissionRate, active, displayOrder, invoiceTarget} */
   const pages = await queryAll(env, env.STAFF_DB_ID);
   const map = {};
   for (const p of pages) {
@@ -208,6 +208,7 @@ async function fetchStaffMap(env) {
     const commissionRate = props['歩合率(%)']?.number || 0;
     const active = props['有効']?.checkbox || false;
     const displayOrder = props['表示順']?.number || 0;
+    const invoiceTarget = props['請求書対象']?.checkbox || false;
     if (!name) continue;
     map[p.id] = {
       id: p.id,
@@ -219,6 +220,7 @@ async function fetchStaffMap(env) {
       commissionRate,
       active,
       displayOrder,
+      invoiceTarget,
     };
   }
   return map;
@@ -408,12 +410,18 @@ async function handleRecent(env, cors) {
 // =====================================================
 
 async function handleStaffList(env, cors) {
-  /** PUBLIC: PIN以外の情報のみ返す */
+  /** PUBLIC: PIN以外の情報のみ返す。
+   * クエリパラメータ ?invoice=1 で請求書対象スタッフのみに絞る */
   const staffMap = await fetchStaffMap(env);
   const list = Object.values(staffMap)
     .filter(s => s.active)
     .sort((a, b) => a.displayOrder - b.displayOrder)
-    .map(s => ({ id: s.id, name: s.name, role: s.role }));
+    .map(s => ({
+      id: s.id,
+      name: s.name,
+      role: s.role,
+      invoiceTarget: s.invoiceTarget,
+    }));
   return jsonResponse({ staff: list }, 200, cors);
 }
 
@@ -700,21 +708,12 @@ async function handleInvoiceGenerate(request, env, cors) {
     }
   }
 
-  // 施術履歴を期間でフィルタ取得
+  // 施術履歴を期間でフィルタ取得（property: 来店日時）
   const treatments = await queryAll(env, env.TREATMENT_DB_ID, {
     and: [
-      { property: '日時', date: { on_or_after: periodStart } },
-      { property: '日時', date: { on_or_before: periodEnd } },
-      { property: 'ステータス', select: { contains: '来店済' } },
+      { property: '来店日時', date: { on_or_after: periodStart } },
+      { property: '来店日時', date: { on_or_before: periodEnd } },
     ]
-  }).catch(async () => {
-    // 日付プロパティ名が違う場合のフォールバック
-    return await queryAll(env, env.TREATMENT_DB_ID, {
-      and: [
-        { property: '来店日時', date: { on_or_after: periodStart } },
-        { property: '来店日時', date: { on_or_before: periodEnd } },
-      ]
-    });
   });
 
   const generated = [];
