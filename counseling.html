@@ -297,9 +297,8 @@
     <!-- ⚠️ デプロイ後、下のWORKER_URLを実際のURLに書き換えてください -->
     <script>
         (function () {
-            // Cloudflare Workerデプロイ後にここを書き換え
-            // 例: 'https://sora-counseling-worker.example.workers.dev'
-            const WORKER_URL = '';
+            // Cloudflare Worker URL (sora-counseling-worker)
+            const WORKER_URL = 'https://sora-counseling-worker.isoya-h.workers.dev';
 
             const form = document.querySelector('.counseling-form');
             if (!form || !WORKER_URL) return;
