@@ -69,7 +69,7 @@
         const el = document.getElementById(`page-${page}`);
         if (el) el.style.display = 'block';
 
-        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー' };
+        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理' };
         document.getElementById('page-title').textContent = titles[page] || page;
         loadPage(page);
     }
@@ -98,6 +98,7 @@
                 case 'sales': await loadSales(); break;
                 case 'staff': await loadStaff(); break;
                 case 'menu': await loadMenu(); break;
+                case 'attendance': await loadAttendance(); break;
             }
             updateLastUpdated();
         } catch (err) {
@@ -229,6 +230,144 @@
                 <td class="num">${FORMAT.yen(m.count ? Math.floor(m.sales / m.count) : 0)}</td>
             </tr>
         `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
+    }
+
+    // ============================================
+    // Attendance
+    // ============================================
+    let _selectedStaff = null;
+
+    async function loadAttendance() {
+        // 打刻ウィジェットの初期化
+        await renderStaffList();
+        await renderTodayPunches();
+        await renderMonthlySummary();
+        bindPunchHandlers();
+    }
+
+    async function renderStaffList() {
+        const data = await API.staffList();
+        const container = document.getElementById('staff-buttons');
+        if (!data.staff || data.staff.length === 0) {
+            container.innerHTML = '<div class="loading-text">スタッフが登録されていません</div>';
+            return;
+        }
+        container.innerHTML = data.staff.map(s => `
+            <button class="staff-button" data-staff-id="${s.id}" data-staff-name="${escapeHtml(s.name)}">
+                <div class="staff-button-name">${escapeHtml(s.name)}</div>
+                <div class="staff-button-role">${escapeHtml(s.role || '')}</div>
+            </button>
+        `).join('');
+    }
+
+    function bindPunchHandlers() {
+        // スタッフ選択
+        document.getElementById('staff-buttons').addEventListener('click', (e) => {
+            const btn = e.target.closest('.staff-button');
+            if (!btn) return;
+            _selectedStaff = {
+                id: btn.dataset.staffId,
+                name: btn.dataset.staffName,
+            };
+            document.getElementById('selected-staff-name').textContent = _selectedStaff.name;
+            document.getElementById('punch-step-staff').style.display = 'none';
+            document.getElementById('punch-step-pin').style.display = 'block';
+            document.getElementById('pin-input').value = '';
+            document.getElementById('punch-error').textContent = '';
+            setTimeout(() => document.getElementById('pin-input').focus(), 100);
+        });
+
+        // 戻るボタン
+        document.getElementById('punch-back').addEventListener('click', () => {
+            document.getElementById('punch-step-pin').style.display = 'none';
+            document.getElementById('punch-step-staff').style.display = 'block';
+        });
+
+        // 打刻ボタン
+        document.querySelectorAll('.punch-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const type = btn.dataset.type;
+                const pin = document.getElementById('pin-input').value;
+                const errEl = document.getElementById('punch-error');
+                errEl.textContent = '';
+                if (!_selectedStaff) {
+                    errEl.textContent = 'スタッフを選択してください';
+                    return;
+                }
+                if (!pin || pin.length !== 4) {
+                    errEl.textContent = 'PIN (4桁) を入力してください';
+                    return;
+                }
+                document.querySelectorAll('.punch-btn').forEach(b => b.disabled = true);
+                try {
+                    const r = await API.punch(_selectedStaff.id, pin, type);
+                    showPunchSuccess(`${r.staff} さんの【${r.type}】を記録しました`);
+                    // 履歴・サマリー更新
+                    await renderTodayPunches();
+                    await renderMonthlySummary();
+                } catch (err) {
+                    errEl.textContent = err.message;
+                } finally {
+                    document.querySelectorAll('.punch-btn').forEach(b => b.disabled = false);
+                }
+            });
+        });
+
+        // 続けて打刻
+        document.getElementById('punch-restart').addEventListener('click', () => {
+            _selectedStaff = null;
+            document.getElementById('punch-step-done').style.display = 'none';
+            document.getElementById('punch-step-staff').style.display = 'block';
+        });
+    }
+
+    function showPunchSuccess(msg) {
+        document.getElementById('punch-success-msg').textContent = msg;
+        document.getElementById('punch-step-pin').style.display = 'none';
+        document.getElementById('punch-step-done').style.display = 'block';
+    }
+
+    async function renderTodayPunches() {
+        const data = await API.attendanceToday();
+        const tbody = document.querySelector('#attendance-today-table tbody');
+        if (!data.today || data.today.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">本日の打刻なし</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.today.map(p => {
+            const time = p.timestamp ? new Date(p.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '-';
+            return `
+                <tr>
+                    <td>${time}</td>
+                    <td>${escapeHtml(p.staffName)}</td>
+                    <td><span class="tag">${escapeHtml(p.type)}</span></td>
+                    <td>${escapeHtml(p.memo || '-')}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    async function renderMonthlySummary() {
+        const data = await API.attendanceSummary();
+        document.getElementById('attendance-month').textContent = (data.month || '').replace('-', '/');
+        const tbody = document.querySelector('#attendance-summary-table tbody');
+        if (!data.summary || data.summary.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">今月の勤務記録なし</td></tr>';
+            return;
+        }
+        tbody.innerHTML = data.summary.map(s => {
+            const h = Math.floor(s.totalMinutes / 60);
+            const m = s.totalMinutes % 60;
+            const wage = s.estimatedWage != null ? FORMAT.yen(s.estimatedWage) : '-';
+            return `
+                <tr>
+                    <td>${escapeHtml(s.name)}</td>
+                    <td class="num">${s.workDays}日</td>
+                    <td class="num">${h}h ${m}m</td>
+                    <td class="num">${wage}</td>
+                </tr>
+            `;
+        }).join('');
     }
 
     // ============================================

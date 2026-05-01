@@ -25,7 +25,28 @@ const API = {
     sales() { return this.request('/api/sales'); },
     staff() { return this.request('/api/staff'); },
     menu() { return this.request('/api/menu'); },
-    recent() { return this.request('/api/recent'); }
+    recent() { return this.request('/api/recent'); },
+
+    // Attendance (auth required for read)
+    attendanceToday() { return this.request('/api/attendance/today'); },
+    attendanceSummary() { return this.request('/api/attendance/summary'); },
+
+    // Public (no auth)
+    async staffList() {
+        const r = await fetch(`${CONFIG.API_BASE}/api/attendance/staff-list`);
+        if (!r.ok) throw new Error('スタッフ一覧の取得に失敗');
+        return r.json();
+    },
+    async punch(staffId, pin, type) {
+        const r = await fetch(`${CONFIG.API_BASE}/api/attendance/punch`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staff_id: staffId, pin, type }),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || '打刻に失敗しました');
+        return data;
+    }
 };
 
 const FORMAT = {

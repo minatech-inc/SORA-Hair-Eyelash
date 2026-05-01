@@ -337,6 +337,164 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================
+   Attendance / Punch
+   ============================================ */
+.attendance-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 2rem 2.25rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--ivory-dark);
+    margin-bottom: 1.5rem;
+    max-width: 720px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.attendance-section-title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--brown-dark);
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+.punch-step { animation: fadeIn 0.3s ease; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.punch-back {
+    display: inline-block;
+    color: var(--gray-500);
+    font-size: 0.82rem;
+    cursor: pointer;
+    margin-bottom: 1rem;
+    transition: color 0.2s;
+}
+.punch-back:hover { color: var(--brown-dark); }
+.punch-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--gray-500);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+}
+.staff-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+.staff-button {
+    padding: 1rem 1.25rem;
+    background: var(--ivory);
+    border: 1px solid var(--beige);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+.staff-button:hover {
+    background: var(--sage-pale);
+    border-color: var(--sage);
+    transform: translateY(-2px);
+}
+.staff-button-name {
+    font-family: var(--font-serif);
+    font-size: 1rem;
+    color: var(--brown-dark);
+    font-weight: 500;
+    margin-bottom: 0.2rem;
+}
+.staff-button-role {
+    font-size: 0.72rem;
+    color: var(--gray-500);
+    letter-spacing: 0.05em;
+}
+.pin-input {
+    width: 100%;
+    padding: 1.1rem;
+    border: 1px solid var(--beige);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-en);
+    font-size: 1.5rem;
+    text-align: center;
+    letter-spacing: 0.5em;
+    background: var(--cream);
+    margin-bottom: 1rem;
+}
+.pin-input:focus {
+    outline: none;
+    border-color: var(--sage);
+}
+.punch-error {
+    color: var(--red);
+    font-size: 0.85rem;
+    min-height: 1.2em;
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+.punch-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+}
+.punch-btn {
+    padding: 1.1rem;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: white;
+    letter-spacing: 0.1em;
+}
+.punch-btn:hover { opacity: 0.85; transform: translateY(-1px); }
+.punch-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.punch-in { background: var(--green); }
+.punch-out { background: var(--brown); }
+.punch-break-start { background: #d4a854; }
+.punch-break-end { background: #c98e58; }
+
+.punch-success {
+    text-align: center;
+    padding: 1.5rem 0;
+}
+.punch-success-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: var(--sage-pale);
+    color: var(--sage-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+}
+.punch-success-msg {
+    font-size: 1.1rem;
+    color: var(--brown-dark);
+    margin-bottom: 1.5rem;
+    font-family: var(--font-serif);
+    letter-spacing: 0.05em;
+}
+.punch-success .btn-primary {
+    width: auto;
+    padding: 0.75rem 2rem;
+    margin: 0 auto;
+}
+.loading-text {
+    text-align: center;
+    color: var(--gray-500);
+    padding: 1rem;
+}
+
+/* ============================================
    Login
    ============================================ */
 .login-screen {

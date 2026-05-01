@@ -31,10 +31,10 @@
             <a href="#menu" class="nav-item" data-page="menu">
                 <span class="nav-icon">🌿</span><span>メニュー</span>
             </a>
-            <div class="nav-section">Coming soon</div>
-            <a href="#" class="nav-item disabled">
-                <span class="nav-icon">📅</span><span>勤怠管理</span>
+            <a href="#attendance" class="nav-item" data-page="attendance">
+                <span class="nav-icon">⏰</span><span>勤怠管理</span>
             </a>
+            <div class="nav-section">Coming soon</div>
             <a href="#" class="nav-item disabled">
                 <span class="nav-icon">🧾</span><span>請求書</span>
             </a>
@@ -164,6 +164,78 @@
                             <th class="num">売上</th>
                             <th class="num">件数</th>
                             <th class="num">平均単価</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ATTENDANCE page -->
+        <section class="page" id="page-attendance" style="display:none;">
+            <!-- 打刻ウィジェット -->
+            <div class="attendance-card">
+                <div class="attendance-section-title">⏰ 打刻</div>
+                <div class="punch-flow" id="punch-flow">
+                    <!-- Step 1: スタッフ選択 -->
+                    <div class="punch-step" id="punch-step-staff">
+                        <label class="punch-label">スタッフを選択</label>
+                        <div class="staff-buttons" id="staff-buttons">
+                            <div class="loading-text">読み込み中...</div>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: PIN入力 -->
+                    <div class="punch-step" id="punch-step-pin" style="display:none;">
+                        <div class="punch-back" id="punch-back">← スタッフを選び直す</div>
+                        <label class="punch-label"><span id="selected-staff-name">-</span> さんのPIN（4桁）</label>
+                        <input type="password" id="pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="****" class="pin-input">
+                        <div class="punch-error" id="punch-error"></div>
+                        <div class="punch-buttons">
+                            <button class="punch-btn punch-in" data-type="出勤">出勤</button>
+                            <button class="punch-btn punch-break-start" data-type="休憩開始">休憩開始</button>
+                            <button class="punch-btn punch-break-end" data-type="休憩終了">休憩終了</button>
+                            <button class="punch-btn punch-out" data-type="退勤">退勤</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: 完了 -->
+                    <div class="punch-step" id="punch-step-done" style="display:none;">
+                        <div class="punch-success">
+                            <div class="punch-success-icon">✓</div>
+                            <div class="punch-success-msg" id="punch-success-msg"></div>
+                            <button class="btn-primary" id="punch-restart">続けて打刻する</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 今日の打刻履歴 -->
+            <div class="recent-card">
+                <div class="recent-title">📋 今日の打刻履歴</div>
+                <table class="recent-table" id="attendance-today-table">
+                    <thead>
+                        <tr>
+                            <th>時刻</th>
+                            <th>スタッフ</th>
+                            <th>種別</th>
+                            <th>備考</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- 今月のサマリー -->
+            <div class="recent-card">
+                <div class="recent-title">📊 今月の勤務時間（<span id="attendance-month">-</span>）</div>
+                <table class="recent-table" id="attendance-summary-table">
+                    <thead>
+                        <tr>
+                            <th>スタッフ</th>
+                            <th class="num">出勤日数</th>
+                            <th class="num">勤務時間</th>
+                            <th class="num">概算給与</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
