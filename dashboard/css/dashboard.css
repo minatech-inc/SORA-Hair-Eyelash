@@ -342,6 +342,138 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================
+   Invoice
+   ============================================ */
+.invoice-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.invoice-tabs {
+    display: flex;
+    gap: 0.5rem;
+}
+.invoice-tab {
+    padding: 0.5rem 1.1rem;
+    border: 1px solid var(--gray-200);
+    background: white;
+    color: var(--gray-700);
+    font-family: inherit;
+    font-size: 0.85rem;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.invoice-tab:hover {
+    background: var(--ivory);
+    border-color: var(--sage);
+}
+.invoice-tab.active {
+    background: var(--sage);
+    color: white;
+    border-color: var(--sage);
+}
+.invoice-actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+.invoice-month-input {
+    padding: 0.55rem 0.85rem;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: white;
+}
+.btn-generate {
+    padding: 0.6rem 1.25rem;
+    background: var(--brown);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    transition: all 0.2s;
+}
+.btn-generate:hover { background: var(--brown-dark); }
+.btn-generate:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.invoice-status {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+}
+.invoice-status.draft       { background: var(--gray-100); color: var(--gray-700); }
+.invoice-status.staff-wait  { background: #fff4d4; color: #8a6d20; }
+.invoice-status.owner-wait  { background: #f5e0c8; color: #a36c2e; }
+.invoice-status.approved    { background: var(--sage-pale); color: var(--sage-dark); }
+.invoice-status.paid        { background: #d8e5f5; color: #4a6e9b; }
+.invoice-status.rejected    { background: #fce5e5; color: var(--red); }
+
+.invoice-action-btn {
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--gray-200);
+    background: white;
+    color: var(--brown-dark);
+    font-family: inherit;
+    font-size: 0.78rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin-right: 0.25rem;
+    transition: all 0.15s;
+}
+.invoice-action-btn:hover {
+    background: var(--sage-pale);
+    border-color: var(--sage);
+}
+.invoice-action-btn.primary { background: var(--sage); color: white; border-color: var(--sage); }
+.invoice-action-btn.primary:hover { background: var(--sage-dark); }
+.invoice-action-btn.danger { color: var(--red); }
+.invoice-action-btn.danger:hover { background: #fce5e5; border-color: var(--red); }
+
+.invoice-staff-card {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    margin-bottom: 0.75rem;
+    background: var(--cream);
+}
+.invoice-staff-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.invoice-staff-card-no {
+    font-family: var(--font-en);
+    font-size: 0.85rem;
+    color: var(--gray-500);
+}
+.invoice-staff-card-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+}
+.invoice-staff-card-detail span {
+    color: var(--gray-500);
+}
+.invoice-staff-card-detail strong {
+    color: var(--brown-dark);
+    font-family: var(--font-en);
+    font-size: 1rem;
+}
+
+/* ============================================
    Attendance / Punch
    ============================================ */
 .attendance-card {

@@ -46,6 +46,65 @@ const API = {
         const data = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(data.error || '打刻に失敗しました');
         return data;
+    },
+
+    // Invoices (auth required for admin)
+    invoiceList() { return this.request('/api/invoices/list'); },
+    async invoiceGenerate(yearMonth, dryRun = false) {
+        const r = await fetch(`${CONFIG.API_BASE}/api/invoices/generate`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AUTH.getToken()}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ year_month: yearMonth, dry_run: dryRun }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || '生成失敗');
+        return data;
+    },
+    async invoiceOwnerApprove(invoiceId) {
+        return this._postAuth('/api/invoices/owner-approve', { invoice_id: invoiceId });
+    },
+    async invoiceReject(invoiceId, reason) {
+        return this._postAuth('/api/invoices/reject', { invoice_id: invoiceId, reason });
+    },
+    async invoiceMarkPaid(invoiceId) {
+        return this._postAuth('/api/invoices/mark-paid', { invoice_id: invoiceId });
+    },
+    async _postAuth(path, body) {
+        const r = await fetch(`${CONFIG.API_BASE}${path}`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${AUTH.getToken()}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(body),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'エラー');
+        return data;
+    },
+    // Staff invoice (PIN auth)
+    async staffInvoices(staffId, pin) {
+        const r = await fetch(`${CONFIG.API_BASE}/api/invoices/staff-list`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ staff_id: staffId, pin }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'エラー');
+        return data;
+    },
+    async staffApproveInvoice(invoiceId, staffId, pin) {
+        const r = await fetch(`${CONFIG.API_BASE}/api/invoices/staff-approve`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ invoice_id: invoiceId, staff_id: staffId, pin }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'エラー');
+        return data;
     }
 };
 

@@ -13,10 +13,17 @@
  *   GET  /api/recent                最近の施術記録（10件）
  *   GET  /api/attendance/today      今日の打刻履歴
  *   GET  /api/attendance/summary    月次勤務時間集計
+ *   GET  /api/invoices/list         請求書一覧（オーナー視点）
+ *   POST /api/invoices/generate     月末請求書を一括生成
+ *   POST /api/invoices/owner-approve オーナー承認
+ *   POST /api/invoices/reject       却下
+ *   POST /api/invoices/mark-paid    支払済マーク
  *
  *   ↓ 以下、認証なし (PINで個別認証)
  *   GET  /api/attendance/staff-list 有効スタッフ一覧（PIN以外）
  *   POST /api/attendance/punch      打刻（PIN必須）
+ *   POST /api/invoices/staff-list   スタッフ自身の請求書一覧（PIN必須）
+ *   POST /api/invoices/staff-approve スタッフ承認（PIN必須）
  *
  * 環境変数 (シークレット):
  *   NOTION_TOKEN          Notion インテグレーション トークン
@@ -25,6 +32,7 @@
  *   CUSTOMER_DB_ID        顧客カルテ DB ID
  *   STAFF_DB_ID           スタッフマスタ DB ID
  *   ATTENDANCE_DB_ID      勤怠記録 DB ID
+ *   INVOICE_DB_ID         請求書 DB ID
  *   DASHBOARD_PASSWORD    ダッシュボード閲覧用パスワード
  */
 
@@ -46,10 +54,12 @@ function isAllowedOrigin(origin) {
   return false;
 }
 
-// 認証不要エンドポイント（PINで自己認証する勤怠系）
+// 認証不要エンドポイント（PINで自己認証する系）
 const PUBLIC_ENDPOINTS = [
   '/api/attendance/staff-list',
   '/api/attendance/punch',
+  '/api/invoices/staff-list',
+  '/api/invoices/staff-approve',
 ];
 
 export default {
@@ -88,6 +98,15 @@ export default {
       if (url.pathname === '/api/attendance/punch')      return await handlePunch(request, env, cors);
       if (url.pathname === '/api/attendance/today')      return await handleAttendanceToday(env, cors);
       if (url.pathname === '/api/attendance/summary')    return await handleAttendanceSummary(env, cors);
+
+      // Invoice endpoints
+      if (url.pathname === '/api/invoices/list')           return await handleInvoiceList(env, cors);
+      if (url.pathname === '/api/invoices/generate')       return await handleInvoiceGenerate(request, env, cors);
+      if (url.pathname === '/api/invoices/owner-approve')  return await handleInvoiceOwnerApprove(request, env, cors);
+      if (url.pathname === '/api/invoices/reject')         return await handleInvoiceReject(request, env, cors);
+      if (url.pathname === '/api/invoices/mark-paid')      return await handleInvoiceMarkPaid(request, env, cors);
+      if (url.pathname === '/api/invoices/staff-list')     return await handleStaffInvoices(request, env, cors);
+      if (url.pathname === '/api/invoices/staff-approve')  return await handleInvoiceStaffApprove(request, env, cors);
 
       return jsonResponse({ status: 'ok', service: 'SORA Dashboard API' }, 200, cors);
     } catch (err) {
@@ -561,6 +580,340 @@ async function handleAttendanceSummary(env, cors) {
   summary.sort((a, b) => b.totalMinutes - a.totalMinutes);
 
   return jsonResponse({ summary, month: thisYM }, 200, cors);
+}
+
+// =====================================================
+// Invoice endpoints
+// =====================================================
+
+function ymToMonthKey(y, m) {
+  return `${y}-${String(m).padStart(2, '0')}`;
+}
+
+function findStaffMatch(staffMap, treatmentStaffName) {
+  // 施術履歴の担当スタッフ名（select値）からスタッフマスタを検索
+  // 例: "からきだ" → "唐木田 帆花" にマッチさせる
+  if (!treatmentStaffName) return null;
+  const normalized = treatmentStaffName.replace(/\s+/g, '');
+  for (const s of Object.values(staffMap)) {
+    const sName = s.name.replace(/\s+/g, '');
+    // 完全一致、部分一致、または特定エイリアス
+    if (sName === normalized) return s;
+    if (sName.includes(normalized) || normalized.includes(sName)) return s;
+    // 「からきだ」→「唐木田」のエイリアス対応
+    if (treatmentStaffName === 'からきだ' && s.name.includes('唐木田')) return s;
+    if (treatmentStaffName === 'からきだ ほのか' && s.name.includes('唐木田')) return s;
+  }
+  return null;
+}
+
+async function findInvoiceForStaffMonth(env, staffId, yearMonth) {
+  const data = await notionFetch(env, `/databases/${env.INVOICE_DB_ID}/query`, {
+    method: 'POST',
+    body: JSON.stringify({
+      filter: {
+        and: [
+          { property: 'スタッフ', relation: { contains: staffId } },
+          { property: '対象月', rich_text: { equals: yearMonth } },
+        ]
+      }
+    })
+  });
+  return (data.results || [])[0] || null;
+}
+
+async function handleInvoiceList(env, cors) {
+  const records = await queryAll(env, env.INVOICE_DB_ID);
+  const staffMap = await fetchStaffMap(env);
+
+  const list = records.map(r => formatInvoice(r, staffMap)).sort((a, b) => {
+    return (b.targetMonth || '').localeCompare(a.targetMonth || '');
+  });
+  return jsonResponse({ invoices: list }, 200, cors);
+}
+
+function formatInvoice(rec, staffMap) {
+  const props = rec.properties || {};
+  const titleProp = Object.values(props).find(v => v.type === 'title');
+  const title = (titleProp?.title || []).map(t => t.plain_text).join('');
+  const staffRel = props['スタッフ']?.relation || [];
+  const staffId = staffRel[0]?.id;
+  const staff = staffId ? staffMap[staffId] : null;
+  return {
+    id: rec.id,
+    invoiceNo: title,
+    staffId,
+    staffName: staff?.name || '',
+    targetMonth: (props['対象月']?.rich_text || []).map(t => t.plain_text).join(''),
+    periodStart: props['期間開始']?.date?.start || '',
+    periodEnd: props['期間終了']?.date?.start || '',
+    closingDate: props['締日']?.date?.start || '',
+    paymentDueDate: props['支払予定日']?.date?.start || '',
+    visitCount: props['件数']?.number || 0,
+    salesExclTax: props['売上合計(税抜)']?.number || 0,
+    tax: props['消費税']?.formula?.number || 0,
+    salesInclTax: props['売上合計(税込)']?.formula?.number || 0,
+    commissionRate: props['報酬率(%)']?.number || 0,
+    feeAmount: props['報酬額']?.formula?.number || 0,
+    status: props['ステータス']?.select?.name || '',
+    staffApprovedAt: props['スタッフ承認日時']?.date?.start || '',
+    ownerApprovedAt: props['オーナー承認日時']?.date?.start || '',
+    paidAt: props['支払日時']?.date?.start || '',
+    driveFileId: (props['Drive ファイルID']?.rich_text || []).map(t => t.plain_text).join(''),
+    note: (props['備考']?.rich_text || []).map(t => t.plain_text).join(''),
+    source: props['作成元']?.select?.name || '',
+  };
+}
+
+async function handleInvoiceGenerate(request, env, cors) {
+  const body = await request.json().catch(() => ({}));
+  const { year_month, dry_run } = body;
+  if (!year_month || !/^\d{4}-\d{2}$/.test(year_month)) {
+    return jsonResponse({ error: 'year_month required (YYYY-MM)' }, 400, cors);
+  }
+
+  // 締日は対象月の末日、支払日は翌月25日
+  const [y, m] = year_month.split('-').map(Number);
+  const periodStart = `${y}-${String(m).padStart(2, '0')}-01`;
+  const lastDay = new Date(y, m, 0).getDate();
+  const periodEnd = `${y}-${String(m).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+  const nextMonth = m === 12 ? 1 : m + 1;
+  const nextYear = m === 12 ? y + 1 : y;
+  const paymentDue = `${nextYear}-${String(nextMonth).padStart(2, '0')}-25`;
+
+  // スタッフ取得（請求書対象のみ）
+  const staffMap = await fetchStaffMap(env);
+  const targetStaff = Object.values(staffMap).filter(s => {
+    // 請求書対象フラグはfetchStaffMapに含まれていないので、Notionから直接取得
+    return s.active;
+  });
+
+  // 改めてフラグ付きで取得
+  const staffPages = await queryAll(env, env.STAFF_DB_ID);
+  const invoiceTargets = [];
+  for (const p of staffPages) {
+    const props = p.properties || {};
+    const isInvoiceTarget = props['請求書対象']?.checkbox || false;
+    const isActive = props['有効']?.checkbox || false;
+    if (isInvoiceTarget && isActive && staffMap[p.id]) {
+      invoiceTargets.push(staffMap[p.id]);
+    }
+  }
+
+  // 施術履歴を期間でフィルタ取得
+  const treatments = await queryAll(env, env.TREATMENT_DB_ID, {
+    and: [
+      { property: '日時', date: { on_or_after: periodStart } },
+      { property: '日時', date: { on_or_before: periodEnd } },
+      { property: 'ステータス', select: { contains: '来店済' } },
+    ]
+  }).catch(async () => {
+    // 日付プロパティ名が違う場合のフォールバック
+    return await queryAll(env, env.TREATMENT_DB_ID, {
+      and: [
+        { property: '来店日時', date: { on_or_after: periodStart } },
+        { property: '来店日時', date: { on_or_before: periodEnd } },
+      ]
+    });
+  });
+
+  const generated = [];
+  const skipped = [];
+  for (const staff of invoiceTargets) {
+    // 既存請求書チェック
+    const existing = await findInvoiceForStaffMonth(env, staff.id, year_month);
+    if (existing) {
+      skipped.push({ staff: staff.name, reason: 'Already exists', invoiceId: existing.id });
+      continue;
+    }
+
+    // 売上集計
+    let visitCount = 0;
+    let salesInclTaxTotal = 0;
+    for (const rec of treatments) {
+      const props = rec.properties || {};
+      const status = props['ステータス']?.select?.name || '';
+      if (!status.includes('来店済')) continue;
+      const treatmentStaffName = props['担当スタッフ']?.select?.name || '';
+      const matchedStaff = findStaffMatch({ [staff.id]: staff }, treatmentStaffName);
+      if (!matchedStaff || matchedStaff.id !== staff.id) continue;
+      visitCount++;
+      salesInclTaxTotal += props['料金']?.number || 0;
+    }
+
+    if (visitCount === 0) {
+      skipped.push({ staff: staff.name, reason: 'No completed visits' });
+      continue;
+    }
+
+    // 税抜計算（料金は税込前提）
+    const salesExclTax = Math.round(salesInclTaxTotal / 1.1);
+    const commissionRate = staff.commissionRate || 0.5;
+    const invoiceNo = `INV-${year_month}-${staff.name.replace(/\s+/g, '').slice(0, 6)}`;
+
+    if (dry_run) {
+      generated.push({
+        staff: staff.name,
+        invoiceNo,
+        visitCount,
+        salesExclTax,
+        feeAmount: Math.round(salesExclTax * commissionRate),
+      });
+      continue;
+    }
+
+    // Notion作成
+    const props = {
+      '請求書番号': { title: [{ text: { content: invoiceNo } }] },
+      'スタッフ': { relation: [{ id: staff.id }] },
+      '対象月': { rich_text: [{ text: { content: year_month } }] },
+      '期間開始': { date: { start: periodStart } },
+      '期間終了': { date: { start: periodEnd } },
+      '締日': { date: { start: periodEnd } },
+      '支払予定日': { date: { start: paymentDue } },
+      '件数': { number: visitCount },
+      '売上合計(税抜)': { number: salesExclTax },
+      '報酬率(%)': { number: commissionRate },
+      'ステータス': { select: { name: 'スタッフ承認待ち' } },
+      '作成元': { select: { name: '自動生成' } },
+    };
+
+    const created = await notionFetch(env, '/pages', {
+      method: 'POST',
+      body: JSON.stringify({
+        parent: { database_id: env.INVOICE_DB_ID },
+        properties: props,
+      }),
+    });
+    generated.push({
+      id: created.id,
+      staff: staff.name,
+      invoiceNo,
+      visitCount,
+      salesExclTax,
+      feeAmount: Math.round(salesExclTax * commissionRate),
+    });
+  }
+
+  return jsonResponse({
+    yearMonth: year_month,
+    periodStart,
+    periodEnd,
+    paymentDue,
+    generated,
+    skipped,
+  }, 200, cors);
+}
+
+async function handleInvoiceStaffApprove(request, env, cors) {
+  const body = await request.json();
+  const { invoice_id, staff_id, pin } = body;
+  if (!invoice_id || !staff_id || !pin) {
+    return jsonResponse({ error: 'invoice_id, staff_id, pin required' }, 400, cors);
+  }
+  // PIN検証
+  const staffMap = await fetchStaffMap(env);
+  const staff = staffMap[staff_id];
+  if (!staff || staff.pin !== pin) {
+    return jsonResponse({ error: 'Invalid PIN' }, 401, cors);
+  }
+  // 請求書取得・所有確認
+  const invoice = await notionFetch(env, `/pages/${invoice_id}`);
+  const invStaffId = invoice.properties['スタッフ']?.relation?.[0]?.id;
+  if (invStaffId !== staff_id) {
+    return jsonResponse({ error: 'Not your invoice' }, 403, cors);
+  }
+  const status = invoice.properties['ステータス']?.select?.name;
+  if (status !== 'スタッフ承認待ち') {
+    return jsonResponse({ error: `Cannot approve from status: ${status}` }, 400, cors);
+  }
+  // 更新
+  await notionFetch(env, `/pages/${invoice_id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      properties: {
+        'ステータス': { select: { name: 'オーナー承認待ち' } },
+        'スタッフ承認日時': { date: { start: new Date().toISOString() } },
+      }
+    })
+  });
+  return jsonResponse({ success: true, status: 'オーナー承認待ち' }, 200, cors);
+}
+
+async function handleInvoiceOwnerApprove(request, env, cors) {
+  const body = await request.json();
+  const { invoice_id } = body;
+  if (!invoice_id) return jsonResponse({ error: 'invoice_id required' }, 400, cors);
+  const invoice = await notionFetch(env, `/pages/${invoice_id}`);
+  const status = invoice.properties['ステータス']?.select?.name;
+  if (status !== 'オーナー承認待ち') {
+    return jsonResponse({ error: `Cannot approve from status: ${status}` }, 400, cors);
+  }
+  await notionFetch(env, `/pages/${invoice_id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      properties: {
+        'ステータス': { select: { name: '確定' } },
+        'オーナー承認日時': { date: { start: new Date().toISOString() } },
+      }
+    })
+  });
+  return jsonResponse({ success: true, status: '確定' }, 200, cors);
+}
+
+async function handleInvoiceReject(request, env, cors) {
+  const body = await request.json();
+  const { invoice_id, reason } = body;
+  if (!invoice_id) return jsonResponse({ error: 'invoice_id required' }, 400, cors);
+  const props = {
+    'ステータス': { select: { name: '却下' } },
+  };
+  if (reason) {
+    props['備考'] = { rich_text: [{ text: { content: reason } }] };
+  }
+  await notionFetch(env, `/pages/${invoice_id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties: props })
+  });
+  return jsonResponse({ success: true, status: '却下' }, 200, cors);
+}
+
+async function handleInvoiceMarkPaid(request, env, cors) {
+  const body = await request.json();
+  const { invoice_id } = body;
+  if (!invoice_id) return jsonResponse({ error: 'invoice_id required' }, 400, cors);
+  await notionFetch(env, `/pages/${invoice_id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      properties: {
+        'ステータス': { select: { name: '支払済' } },
+        '支払日時': { date: { start: new Date().toISOString() } },
+      }
+    })
+  });
+  return jsonResponse({ success: true, status: '支払済' }, 200, cors);
+}
+
+async function handleStaffInvoices(request, env, cors) {
+  const body = await request.json();
+  const { staff_id, pin } = body;
+  if (!staff_id || !pin) {
+    return jsonResponse({ error: 'staff_id, pin required' }, 400, cors);
+  }
+  const staffMap = await fetchStaffMap(env);
+  const staff = staffMap[staff_id];
+  if (!staff || staff.pin !== pin) {
+    return jsonResponse({ error: 'Invalid PIN' }, 401, cors);
+  }
+  const data = await notionFetch(env, `/databases/${env.INVOICE_DB_ID}/query`, {
+    method: 'POST',
+    body: JSON.stringify({
+      filter: { property: 'スタッフ', relation: { contains: staff_id } },
+      sorts: [{ property: '対象月', direction: 'descending' }],
+    })
+  });
+  const invoices = (data.results || []).map(r => formatInvoice(r, staffMap));
+  return jsonResponse({ invoices, staffName: staff.name }, 200, cors);
 }
 
 // =====================================================

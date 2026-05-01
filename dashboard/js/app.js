@@ -69,7 +69,7 @@
         const el = document.getElementById(`page-${page}`);
         if (el) el.style.display = 'block';
 
-        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理' };
+        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理', invoices: '請求書' };
         document.getElementById('page-title').textContent = titles[page] || page;
         loadPage(page);
     }
@@ -99,6 +99,7 @@
                 case 'staff': await loadStaff(); break;
                 case 'menu': await loadMenu(); break;
                 case 'attendance': await loadAttendance(); break;
+                case 'invoices': await loadInvoices(); break;
             }
             updateLastUpdated();
         } catch (err) {
@@ -368,6 +369,251 @@
                 </tr>
             `;
         }).join('');
+    }
+
+    // ============================================
+    // Invoices
+    // ============================================
+    let _invoiceFilter = 'all';
+    let _staffInvoiceContext = null;
+
+    async function loadInvoices() {
+        // 月picker初期値: 前月
+        const monthInput = document.getElementById('invoice-month');
+        if (monthInput && !monthInput.value) {
+            const d = new Date();
+            d.setMonth(d.getMonth() - 1);
+            monthInput.value = d.toISOString().slice(0, 7);
+        }
+
+        bindInvoiceHandlers();
+        await renderInvoiceList();
+        await renderStaffInvoiceFlow();
+    }
+
+    function bindInvoiceHandlers() {
+        // 1度だけバインドするためのフラグ
+        if (window._invoiceHandlersBound) return;
+        window._invoiceHandlersBound = true;
+
+        document.querySelectorAll('.invoice-tab').forEach(t => {
+            t.addEventListener('click', async () => {
+                document.querySelectorAll('.invoice-tab').forEach(b => b.classList.remove('active'));
+                t.classList.add('active');
+                _invoiceFilter = t.dataset.tab;
+                await renderInvoiceList();
+            });
+        });
+
+        document.getElementById('btn-generate').addEventListener('click', async () => {
+            const ym = document.getElementById('invoice-month').value;
+            if (!ym) {
+                alert('対象月を選択してください');
+                return;
+            }
+            if (!confirm(`${ym} の請求書を生成しますか？\n（既存があればスキップされます）`)) return;
+            const btn = document.getElementById('btn-generate');
+            btn.disabled = true;
+            btn.textContent = '生成中...';
+            try {
+                const r = await API.invoiceGenerate(ym);
+                let msg = `生成: ${r.generated.length}件\nスキップ: ${r.skipped.length}件`;
+                if (r.generated.length > 0) {
+                    msg += '\n\n[生成された請求書]\n' + r.generated.map(g => `${g.staff}: ${g.visitCount}件 / ¥${g.feeAmount.toLocaleString()}`).join('\n');
+                }
+                alert(msg);
+                await renderInvoiceList();
+            } catch (e) {
+                alert('エラー: ' + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '月末請求書を生成';
+            }
+        });
+
+        // スタッフ請求書フロー
+        document.getElementById('invoice-staff-buttons').addEventListener('click', (e) => {
+            const btn = e.target.closest('.staff-button');
+            if (!btn) return;
+            _staffInvoiceContext = { staffId: btn.dataset.staffId, staffName: btn.dataset.staffName };
+            document.getElementById('invoice-staff-name').textContent = btn.dataset.staffName;
+            document.getElementById('invoice-staff-select').style.display = 'none';
+            document.getElementById('invoice-pin-step').style.display = 'block';
+            document.getElementById('invoice-pin-input').value = '';
+            document.getElementById('invoice-pin-error').textContent = '';
+            setTimeout(() => document.getElementById('invoice-pin-input').focus(), 100);
+        });
+
+        document.getElementById('invoice-pin-back').addEventListener('click', () => {
+            document.getElementById('invoice-pin-step').style.display = 'none';
+            document.getElementById('invoice-staff-select').style.display = 'block';
+        });
+
+        document.getElementById('invoice-pin-submit').addEventListener('click', async () => {
+            const pin = document.getElementById('invoice-pin-input').value;
+            const errEl = document.getElementById('invoice-pin-error');
+            errEl.textContent = '';
+            if (!pin || pin.length !== 4) {
+                errEl.textContent = 'PIN (4桁) を入力してください';
+                return;
+            }
+            try {
+                const r = await API.staffInvoices(_staffInvoiceContext.staffId, pin);
+                _staffInvoiceContext.pin = pin;
+                document.getElementById('invoice-list-staff-name').textContent = r.staffName;
+                document.getElementById('invoice-pin-step').style.display = 'none';
+                document.getElementById('invoice-staff-list').style.display = 'block';
+                renderStaffInvoiceItems(r.invoices);
+            } catch (e) {
+                errEl.textContent = e.message;
+            }
+        });
+
+        document.getElementById('invoice-list-back').addEventListener('click', () => {
+            _staffInvoiceContext = null;
+            document.getElementById('invoice-staff-list').style.display = 'none';
+            document.getElementById('invoice-staff-select').style.display = 'block';
+        });
+    }
+
+    async function renderInvoiceList() {
+        const data = await API.invoiceList();
+        const tbody = document.querySelector('#invoice-table tbody');
+        let invoices = data.invoices || [];
+
+        if (_invoiceFilter === 'pending') {
+            invoices = invoices.filter(i => i.status === 'スタッフ承認待ち' || i.status === 'オーナー承認待ち');
+        } else if (_invoiceFilter === 'approved') {
+            invoices = invoices.filter(i => i.status === '確定');
+        } else if (_invoiceFilter === 'paid') {
+            invoices = invoices.filter(i => i.status === '支払済');
+        }
+
+        if (invoices.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">該当する請求書なし</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = invoices.map(i => `
+            <tr>
+                <td><span style="font-family:var(--font-en)">${escapeHtml(i.invoiceNo)}</span></td>
+                <td>${escapeHtml(i.staffName)}</td>
+                <td>${escapeHtml(i.targetMonth || '-')}</td>
+                <td class="num">${i.visitCount}</td>
+                <td class="num">${FORMAT.yen(i.salesExclTax)}</td>
+                <td class="num">${FORMAT.yen(i.feeAmount)}</td>
+                <td>${invoiceStatusBadge(i.status)}</td>
+                <td>${invoiceActions(i)}</td>
+            </tr>
+        `).join('');
+
+        document.querySelectorAll('[data-action]').forEach(b => {
+            b.addEventListener('click', async () => {
+                const action = b.dataset.action;
+                const id = b.dataset.id;
+                try {
+                    if (action === 'approve') {
+                        if (!confirm('オーナー承認します。よろしいですか？')) return;
+                        await API.invoiceOwnerApprove(id);
+                    } else if (action === 'reject') {
+                        const reason = prompt('却下理由を入力してください');
+                        if (reason === null) return;
+                        await API.invoiceReject(id, reason);
+                    } else if (action === 'paid') {
+                        if (!confirm('支払済としてマークします。よろしいですか？')) return;
+                        await API.invoiceMarkPaid(id);
+                    }
+                    await renderInvoiceList();
+                } catch (e) {
+                    alert('エラー: ' + e.message);
+                }
+            });
+        });
+    }
+
+    function invoiceStatusBadge(status) {
+        const map = {
+            '下書き': 'draft',
+            'スタッフ承認待ち': 'staff-wait',
+            'オーナー承認待ち': 'owner-wait',
+            '確定': 'approved',
+            '支払済': 'paid',
+            '却下': 'rejected',
+        };
+        const cls = map[status] || 'draft';
+        return `<span class="invoice-status ${cls}">${escapeHtml(status)}</span>`;
+    }
+
+    function invoiceActions(i) {
+        const buttons = [];
+        if (i.status === 'オーナー承認待ち') {
+            buttons.push(`<button class="invoice-action-btn primary" data-action="approve" data-id="${i.id}">承認</button>`);
+            buttons.push(`<button class="invoice-action-btn danger" data-action="reject" data-id="${i.id}">却下</button>`);
+        }
+        if (i.status === '確定') {
+            buttons.push(`<button class="invoice-action-btn primary" data-action="paid" data-id="${i.id}">支払済</button>`);
+        }
+        return buttons.join('') || '<span style="color:#999;">-</span>';
+    }
+
+    async function renderStaffInvoiceFlow() {
+        const data = await API.staffList();
+        const container = document.getElementById('invoice-staff-buttons');
+        if (!data.staff || data.staff.length === 0) {
+            container.innerHTML = '<div class="loading-text">スタッフが登録されていません</div>';
+            return;
+        }
+        container.innerHTML = data.staff.map(s => `
+            <button class="staff-button" data-staff-id="${s.id}" data-staff-name="${escapeHtml(s.name)}">
+                <div class="staff-button-name">${escapeHtml(s.name)}</div>
+                <div class="staff-button-role">${escapeHtml(s.role || '')}</div>
+            </button>
+        `).join('');
+    }
+
+    function renderStaffInvoiceItems(invoices) {
+        const container = document.getElementById('invoice-staff-items');
+        if (!invoices || invoices.length === 0) {
+            container.innerHTML = '<div class="loading-text">請求書はまだありません</div>';
+            return;
+        }
+        container.innerHTML = invoices.map(i => `
+            <div class="invoice-staff-card">
+                <div class="invoice-staff-card-header">
+                    <div>
+                        <div class="invoice-staff-card-no">${escapeHtml(i.invoiceNo)}</div>
+                        <div style="font-family:var(--font-serif);color:var(--brown-dark);">${escapeHtml(i.targetMonth || '')} 月度</div>
+                    </div>
+                    ${invoiceStatusBadge(i.status)}
+                </div>
+                <div class="invoice-staff-card-detail">
+                    <div><span>件数:</span> <strong>${i.visitCount}件</strong></div>
+                    <div><span>売上(税抜):</span> <strong>${FORMAT.yen(i.salesExclTax)}</strong></div>
+                    <div><span>報酬率:</span> <strong>${Math.round(i.commissionRate * 100)}%</strong></div>
+                    <div><span>報酬額:</span> <strong>${FORMAT.yen(i.feeAmount)}</strong></div>
+                    <div><span>締日:</span> <strong style="font-size:0.85rem;">${i.closingDate || '-'}</strong></div>
+                    <div><span>支払予定:</span> <strong style="font-size:0.85rem;">${i.paymentDueDate || '-'}</strong></div>
+                </div>
+                ${i.status === 'スタッフ承認待ち' ? `
+                    <button class="btn-primary" data-staff-approve="${i.id}" style="width:100%;padding:0.75rem;">この内容で承認する</button>
+                ` : ''}
+            </div>
+        `).join('');
+
+        container.querySelectorAll('[data-staff-approve]').forEach(b => {
+            b.addEventListener('click', async () => {
+                const id = b.dataset.staffApprove;
+                if (!confirm('この請求書内容で承認します。よろしいですか？')) return;
+                try {
+                    await API.staffApproveInvoice(id, _staffInvoiceContext.staffId, _staffInvoiceContext.pin);
+                    alert('承認しました。オーナー承認をお待ちください。');
+                    const r = await API.staffInvoices(_staffInvoiceContext.staffId, _staffInvoiceContext.pin);
+                    renderStaffInvoiceItems(r.invoices);
+                } catch (e) {
+                    alert('エラー: ' + e.message);
+                }
+            });
+        });
     }
 
     // ============================================

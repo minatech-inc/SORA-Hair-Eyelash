@@ -51,8 +51,7 @@
                 </svg>
                 <span>勤怠管理</span>
             </a>
-            <div class="nav-section">Coming soon</div>
-            <a href="#" class="nav-item disabled">
+            <a href="#invoices" class="nav-item" data-page="invoices">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M6 2h9l5 5v15a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1z"/>
                     <path d="M14 2v6h6M9 13h6M9 17h6"/>
@@ -189,6 +188,71 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- INVOICES page -->
+        <section class="page" id="page-invoices" style="display:none;">
+            <div class="invoice-toolbar">
+                <div class="invoice-tabs">
+                    <button class="invoice-tab active" data-tab="all">全請求書</button>
+                    <button class="invoice-tab" data-tab="pending">承認待ち</button>
+                    <button class="invoice-tab" data-tab="approved">確定</button>
+                    <button class="invoice-tab" data-tab="paid">支払済</button>
+                </div>
+                <div class="invoice-actions">
+                    <input type="month" id="invoice-month" class="invoice-month-input">
+                    <button class="btn-generate" id="btn-generate">月末請求書を生成</button>
+                </div>
+            </div>
+
+            <div class="recent-card">
+                <div class="recent-title">請求書一覧</div>
+                <table class="recent-table" id="invoice-table">
+                    <thead>
+                        <tr>
+                            <th>請求書No</th>
+                            <th>スタッフ</th>
+                            <th>対象月</th>
+                            <th class="num">件数</th>
+                            <th class="num">売上(税抜)</th>
+                            <th class="num">報酬額</th>
+                            <th>ステータス</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- スタッフ承認カード -->
+            <div class="attendance-card" style="margin-top: 2rem;">
+                <div class="attendance-section-title">スタッフ承認</div>
+                <p style="text-align:center;color:var(--gray-500);font-size:0.85rem;margin-bottom:1.5rem;">
+                    スタッフ自身が請求書内容を確認・承認するためのエリアです
+                </p>
+                <div class="punch-flow" id="invoice-staff-flow">
+                    <div class="punch-step" id="invoice-staff-select">
+                        <label class="punch-label">スタッフを選択</label>
+                        <div class="staff-buttons" id="invoice-staff-buttons">
+                            <div class="loading-text">読み込み中...</div>
+                        </div>
+                    </div>
+                    <div class="punch-step" id="invoice-pin-step" style="display:none;">
+                        <div class="punch-back" id="invoice-pin-back">← スタッフを選び直す</div>
+                        <label class="punch-label"><span id="invoice-staff-name">-</span> さんのPIN（4桁）</label>
+                        <input type="password" id="invoice-pin-input" maxlength="4" inputmode="numeric" pattern="[0-9]*" placeholder="****" class="pin-input">
+                        <div class="punch-error" id="invoice-pin-error"></div>
+                        <button class="btn-primary" id="invoice-pin-submit">確認する</button>
+                    </div>
+                    <div class="punch-step" id="invoice-staff-list" style="display:none;">
+                        <div class="punch-back" id="invoice-list-back">← ログアウト</div>
+                        <h3 style="font-family:var(--font-serif);color:var(--brown-dark);text-align:center;margin-bottom:1rem;">
+                            <span id="invoice-list-staff-name">-</span> さんの請求書
+                        </h3>
+                        <div id="invoice-staff-items"></div>
+                    </div>
+                </div>
             </div>
         </section>
 
