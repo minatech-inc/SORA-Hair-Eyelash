@@ -20,23 +20,44 @@
         </div>
         <nav class="nav">
             <a href="#home" class="nav-item active" data-page="home">
-                <span class="nav-icon">🏠</span><span>ホーム</span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12l9-9 9 9M5 10v10a1 1 0 001 1h3v-6h6v6h3a1 1 0 001-1V10"/>
+                </svg>
+                <span>ホーム</span>
             </a>
             <a href="#sales" class="nav-item" data-page="sales">
-                <span class="nav-icon">📊</span><span>売上</span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/>
+                </svg>
+                <span>売上</span>
             </a>
             <a href="#staff" class="nav-item" data-page="staff">
-                <span class="nav-icon">👥</span><span>スタッフ</span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0112 0"/>
+                    <circle cx="17" cy="9" r="2.5"/><path d="M15 16a4.5 4.5 0 016 4"/>
+                </svg>
+                <span>スタッフ</span>
             </a>
             <a href="#menu" class="nav-item" data-page="menu">
-                <span class="nav-icon">🌿</span><span>メニュー</span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2C7 5 4 9 4 13c0 4 3 7 8 7s8-3 8-7c0-4-3-8-8-11z"/>
+                    <path d="M12 2v18"/>
+                </svg>
+                <span>メニュー</span>
             </a>
             <a href="#attendance" class="nav-item" data-page="attendance">
-                <span class="nav-icon">⏰</span><span>勤怠管理</span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
+                </svg>
+                <span>勤怠管理</span>
             </a>
             <div class="nav-section">Coming soon</div>
             <a href="#" class="nav-item disabled">
-                <span class="nav-icon">🧾</span><span>請求書</span>
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 2h9l5 5v15a1 1 0 01-1 1H6a1 1 0 01-1-1V3a1 1 0 011-1z"/>
+                    <path d="M14 2v6h6M9 13h6M9 17h6"/>
+                </svg>
+                <span>請求書</span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -175,7 +196,7 @@
         <section class="page" id="page-attendance" style="display:none;">
             <!-- 打刻ウィジェット -->
             <div class="attendance-card">
-                <div class="attendance-section-title">⏰ 打刻</div>
+                <div class="attendance-section-title">打刻</div>
                 <div class="punch-flow" id="punch-flow">
                     <!-- Step 1: スタッフ選択 -->
                     <div class="punch-step" id="punch-step-staff">
@@ -212,7 +233,7 @@
 
             <!-- 今日の打刻履歴 -->
             <div class="recent-card">
-                <div class="recent-title">📋 今日の打刻履歴</div>
+                <div class="recent-title">今日の打刻履歴</div>
                 <table class="recent-table" id="attendance-today-table">
                     <thead>
                         <tr>
@@ -228,7 +249,7 @@
 
             <!-- 今月のサマリー -->
             <div class="recent-card">
-                <div class="recent-title">📊 今月の勤務時間（<span id="attendance-month">-</span>）</div>
+                <div class="recent-title">今月の勤務時間（<span id="attendance-month">-</span>）</div>
                 <table class="recent-table" id="attendance-summary-table">
                     <thead>
                         <tr>

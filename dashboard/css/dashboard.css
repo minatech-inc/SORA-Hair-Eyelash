@@ -118,7 +118,12 @@ a { color: inherit; text-decoration: none; }
 }
 .nav-item.disabled { opacity: 0.35; cursor: not-allowed; }
 .nav-item.disabled:hover { background: transparent; color: rgba(255, 255, 255, 0.78); }
-.nav-icon { font-size: 1rem; flex-shrink: 0; }
+.nav-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    stroke: currentColor;
+}
 
 .sidebar-footer {
     padding: 0 1.5rem;
