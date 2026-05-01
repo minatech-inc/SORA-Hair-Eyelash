@@ -23,11 +23,19 @@ const NOTION_VERSION = '2022-06-28';
 
 const ALLOWED_ORIGINS = [
   'https://sora-dashboard.minatech1210.com',
+  'https://sora-dashboard.pages.dev',
   'https://minatech-inc.github.io',
   'http://localhost:9000',
   'http://localhost:8080',
   'http://127.0.0.1:5500',
 ];
+
+// Cloudflare Pages preview URLs ( <hash>.sora-dashboard.pages.dev ) も許可
+function isAllowedOrigin(origin) {
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  if (/^https:\/\/[a-z0-9-]+\.sora-dashboard\.pages\.dev$/.test(origin)) return true;
+  return false;
+}
 
 export default {
   async fetch(request, env) {
@@ -356,7 +364,7 @@ async function handleRecent(env, cors) {
 
 function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
-  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  const allowed = isAllowedOrigin(origin) ? origin : ALLOWED_ORIGINS[0];
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
