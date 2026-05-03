@@ -108,6 +108,14 @@ export default {
       if (url.pathname === '/api/invoices/staff-list')     return await handleStaffInvoices(request, env, cors);
       if (url.pathname === '/api/invoices/staff-approve')  return await handleInvoiceStaffApprove(request, env, cors);
 
+      // Invoice HTML/Info (with token query auth)
+      const htmlMatch = url.pathname.match(/^\/api\/invoices\/([^/]+)\/html$/);
+      if (htmlMatch) return await handleInvoiceHtml(htmlMatch[1], url, env);
+      const infoMatch = url.pathname.match(/^\/api\/invoices\/([^/]+)\/info$/);
+      if (infoMatch) return await handleInvoiceInfo(infoMatch[1], url, env, cors);
+      const updateFileMatch = url.pathname.match(/^\/api\/invoices\/([^/]+)\/set-drive-file$/);
+      if (updateFileMatch) return await handleSetDriveFile(updateFileMatch[1], request, url, env, cors);
+
       // Public HTML invoice (token-based)
       const htmlMatch = url.pathname.match(/^\/api\/invoices\/([a-f0-9-]{36})\/html$/i);
       if (htmlMatch) {
@@ -919,6 +927,66 @@ async function handleStaffInvoices(request, env, cors) {
   });
   const invoices = (data.results || []).map(r => formatInvoice(r, staffMap));
   return jsonResponse({ invoices, staffName: staff.name }, 200, cors);
+}
+
+// =====================================================
+// Invoice info endpoint (returns staff folder ID, name, etc for Make.com)
+// =====================================================
+
+async function handleInvoiceInfo(invoiceId, url, env, cors) {
+  const token = url.searchParams.get('token');
+  if (token !== env.DASHBOARD_PASSWORD) {
+    return jsonResponse({ error: 'Unauthorized' }, 401, cors);
+  }
+
+  const invoicePage = await notionFetch(env, `/pages/${invoiceId}`);
+  const staffMap = await fetchStaffMap(env);
+  const inv = formatInvoice(invoicePage, staffMap);
+  const staff = staffMap[inv.staffId];
+
+  if (!staff) {
+    return jsonResponse({ error: 'Staff not found' }, 404, cors);
+  }
+
+  // スタッフ情報をフェッチして、DriveフォルダIDを取得
+  const staffPage = await notionFetch(env, `/pages/${staff.id}`);
+  const driveFolderId = (staffPage.properties['DriveフォルダID']?.rich_text || [])
+    .map(t => t.plain_text).join('');
+
+  // ファイル名（請求書No に拡張子付与）
+  const filename = `${inv.invoiceNo}.pdf`;
+
+  return jsonResponse({
+    invoiceId: inv.id,
+    invoiceNo: inv.invoiceNo,
+    staffId: staff.id,
+    staffName: staff.name,
+    driveFolderId,
+    filename,
+    targetMonth: inv.targetMonth,
+    htmlUrl: `${url.origin}/api/invoices/${inv.id}/html?token=${token}`,
+  }, 200, cors);
+}
+
+async function handleSetDriveFile(invoiceId, request, url, env, cors) {
+  const token = url.searchParams.get('token');
+  if (token !== env.DASHBOARD_PASSWORD) {
+    return jsonResponse({ error: 'Unauthorized' }, 401, cors);
+  }
+  const body = await request.json().catch(() => ({}));
+  const { drive_file_id } = body;
+  if (!drive_file_id) {
+    return jsonResponse({ error: 'drive_file_id required' }, 400, cors);
+  }
+  await notionFetch(env, `/pages/${invoiceId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      properties: {
+        'Drive ファイルID': { rich_text: [{ text: { content: drive_file_id } }] },
+      }
+    })
+  });
+  return jsonResponse({ success: true }, 200, cors);
 }
 
 // =====================================================
