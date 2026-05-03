@@ -116,12 +116,6 @@ export default {
       const updateFileMatch = url.pathname.match(/^\/api\/invoices\/([^/]+)\/set-drive-file$/);
       if (updateFileMatch) return await handleSetDriveFile(updateFileMatch[1], request, url, env, cors);
 
-      // Public HTML invoice (token-based)
-      const htmlMatch = url.pathname.match(/^\/api\/invoices\/([a-f0-9-]{36})\/html$/i);
-      if (htmlMatch) {
-        return await handleInvoiceHtml(htmlMatch[1], url, env);
-      }
-
       return jsonResponse({ status: 'ok', service: 'SORA Dashboard API' }, 200, cors);
     } catch (err) {
       console.error('Worker error:', err);
