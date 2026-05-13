@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>カウンセリングシート QR | SORA - HAIR & EYELASH -</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&family=Noto+Sans+JP:wght@300;400;500&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* QRページ専用スタイル */
+        .qr-screen {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            background: linear-gradient(160deg, var(--ivory) 0%, var(--cream) 100%);
+        }
+        .qr-card {
+            max-width: 560px;
+            width: 100%;
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 4rem 3rem;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        .qr-brand {
+            font-family: var(--font-serif);
+            font-size: 1.75rem;
+            font-weight: 500;
+            letter-spacing: 0.3em;
+            color: var(--brown-dark);
+            margin-bottom: 0.25rem;
+        }
+        .qr-brand-sub {
+            font-family: var(--font-en);
+            font-size: 0.85rem;
+            letter-spacing: 0.35em;
+            color: var(--sage-dark);
+            text-transform: uppercase;
+            margin-bottom: 2.5rem;
+        }
+        .qr-divider {
+            display: inline-block;
+            width: 60px;
+            height: 1px;
+            background: var(--sage);
+            margin: 0 auto 2rem;
+        }
+        .qr-title {
+            font-family: var(--font-serif);
+            font-size: 1.4rem;
+            font-weight: 500;
+            color: var(--brown-dark);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.15em;
+        }
+        .qr-subtitle {
+            font-family: var(--font-en);
+            font-size: 0.85rem;
+            letter-spacing: 0.3em;
+            color: var(--sage-dark);
+            text-transform: uppercase;
+            margin-bottom: 2.5rem;
+        }
+        .qr-code-wrap {
+            display: inline-block;
+            padding: 1.25rem;
+            background: white;
+            border: 2px solid var(--sage-pale);
+            border-radius: var(--radius-md);
+            margin: 0 auto 2rem;
+        }
+        #qrcode {
+            display: block;
+        }
+        #qrcode img, #qrcode canvas {
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-url {
+            font-family: var(--font-en);
+            font-size: 0.78rem;
+            color: var(--gray-500);
+            word-break: break-all;
+            margin-bottom: 2.25rem;
+            padding: 0.75rem 1rem;
+            background: var(--ivory);
+            border-radius: var(--radius-sm);
+            display: inline-block;
+            max-width: 90%;
+        }
+        .qr-instructions {
+            text-align: left;
+            background: var(--cream);
+            padding: 1.5rem 1.75rem;
+            border-radius: var(--radius-md);
+            border-left: 3px solid var(--sage);
+            margin-bottom: 2rem;
+        }
+        .qr-instructions-title {
+            font-family: var(--font-serif);
+            font-size: 0.95rem;
+            color: var(--brown-dark);
+            margin-bottom: 0.85rem;
+            letter-spacing: 0.05em;
+        }
+        .qr-instructions ol {
+            margin: 0;
+            padding-left: 1.5rem;
+            color: var(--gray-700);
+            font-size: 0.88rem;
+            line-height: 1.95;
+        }
+        .qr-instructions ol li { margin-bottom: 0.3rem; }
+        .qr-footer {
+            font-size: 0.78rem;
+            color: var(--gray-500);
+            line-height: 1.8;
+            letter-spacing: 0.05em;
+        }
+        .qr-footer strong {
+            display: block;
+            color: var(--brown-dark);
+            font-family: var(--font-serif);
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.1em;
+        }
+        .qr-actions {
+            margin-top: 1.5rem;
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+        }
+        .qr-btn {
+            padding: 0.65rem 1.5rem;
+            font-size: 0.82rem;
+            border-radius: 999px;
+            border: 1px solid var(--sage);
+            background: var(--sage);
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+            letter-spacing: 0.1em;
+            transition: all 0.2s;
+        }
+        .qr-btn:hover { background: var(--sage-dark); border-color: var(--sage-dark); }
+        .qr-btn.secondary { background: white; color: var(--sage-dark); }
+        .qr-btn.secondary:hover { background: var(--sage-pale); }
+
+        /* 印刷用調整 */
+        @media print {
+            @page { size: A4; margin: 15mm; }
+            body { background: white !important; }
+            .qr-screen { padding: 0; background: white; min-height: auto; }
+            .qr-card {
+                box-shadow: none;
+                border: 1px solid var(--ivory-dark);
+                padding: 2.5rem 2rem;
+                page-break-inside: avoid;
+            }
+            .qr-actions { display: none; }
+            .qr-url { padding: 0.5rem; }
+        }
+
+        /* スマホ調整 */
+        @media (max-width: 720px) {
+            .qr-card { padding: 2.5rem 1.75rem; }
+            .qr-brand { font-size: 1.45rem; }
+            .qr-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-screen">
+        <div class="qr-card">
+            <div class="qr-brand">SORA</div>
+            <div class="qr-brand-sub">Hair &amp; Eyelash</div>
+
+            <span class="qr-divider"></span>
+
+            <div class="qr-title">カウンセリングシート</div>
+            <div class="qr-subtitle">Counseling Sheet</div>
+
+            <div class="qr-code-wrap">
+                <div id="qrcode"></div>
+            </div>
+
+            <div class="qr-url">https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html</div>
+
+            <div class="qr-instructions">
+                <div class="qr-instructions-title">ご記入のお願い</div>
+                <ol>
+                    <li>スマートフォンのカメラでQRコードを読み取ってください</li>
+                    <li>表示されたフォームに必要事項をご入力ください</li>
+                    <li>送信後、施術にスムーズに移れます</li>
+                </ol>
+            </div>
+
+            <div class="qr-footer">
+                <strong>SORA - HAIR &amp; EYELASH -</strong>
+                〒253-0055 神奈川県茅ヶ崎市中海岸1丁目2-43 サザンマンションB棟 2F<br>
+                営業時間: 10:00 - 19:00 / 不定休
+            </div>
+
+            <div class="qr-actions">
+                <button class="qr-btn" onclick="window.print()">印刷する</button>
+                <button class="qr-btn secondary" onclick="downloadQR()">QR画像をダウンロード</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        const COUNSELING_URL = 'https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html';
+        const QR_SIZE = 280;
+
+        // QR生成（canvas）
+        QRCode.toCanvas(document.getElementById('qrcode'), COUNSELING_URL, {
+            width: QR_SIZE,
+            margin: 1,
+            errorCorrectionLevel: 'H',
+            color: {
+                dark: '#6b5641',    // brown-dark
+                light: '#ffffff'
+            }
+        }, function (err) {
+            if (err) {
+                console.error(err);
+                document.getElementById('qrcode').innerHTML = 'QR生成失敗: ' + err.message;
+            }
+        });
+
+        // ダウンロード機能
+        function downloadQR() {
+            const canvas = document.querySelector('#qrcode canvas');
+            if (!canvas) return;
+            const link = document.createElement('a');
+            link.download = 'SORA-counseling-qr.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
