@@ -556,12 +556,16 @@
         const html = `
             <div class="customer-detail-header">
                 <div class="customer-avatar customer-detail-avatar">${escapeHtml(c.name.charAt(0))}</div>
-                <div>
+                <div style="flex:1;">
                     <div class="customer-detail-name">${escapeHtml(c.name)}</div>
                     <div class="customer-detail-sub">
                         ${escapeHtml(c.kana || '')} ${c.birthday ? '・ ' + c.birthday + ' 生' : ''}
                         ${c.firstVisitDate ? '・ 初来店 ' + c.firstVisitDate : ''}
                     </div>
+                </div>
+                <div class="customer-actions">
+                    <button class="invoice-action-btn primary" data-edit-customer="${c.id}">編集</button>
+                    <button class="invoice-action-btn" data-add-treatment="${c.id}">施術追加</button>
                 </div>
             </div>
 
@@ -598,6 +602,250 @@
             ${renderTreatments(c.treatments || [])}
         `;
         document.getElementById('customer-modal-content').innerHTML = html;
+
+        // Edit/Add buttons
+        const editBtn = document.querySelector('[data-edit-customer]');
+        if (editBtn) editBtn.addEventListener('click', () => openCustomerEdit(c));
+        const addBtn = document.querySelector('[data-add-treatment]');
+        if (addBtn) addBtn.addEventListener('click', () => openTreatmentAdd(c));
+    }
+
+    function openCustomerEdit(c) {
+        const html = `
+            <h3 style="font-family:var(--font-serif);color:var(--brown-dark);margin-bottom:1.5rem;font-size:1.3rem;">顧客情報を編集</h3>
+            <form id="customer-edit-form" class="edit-form">
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label>お名前</label>
+                        <input type="text" name="お名前" value="${escapeHtml(c.name || '')}" required>
+                    </div>
+                    <div class="form-field">
+                        <label>フリガナ</label>
+                        <input type="text" name="フリガナ" value="${escapeHtml(c.kana || '')}">
+                    </div>
+                    <div class="form-field">
+                        <label>電話番号</label>
+                        <input type="tel" name="電話番号" value="${escapeHtml(c.phone || '')}">
+                    </div>
+                    <div class="form-field">
+                        <label>メール</label>
+                        <input type="email" name="メールアドレス" value="${escapeHtml(c.email || '')}">
+                    </div>
+                    <div class="form-field">
+                        <label>生年月日</label>
+                        <input type="date" name="生年月日" value="${c.birthday || ''}">
+                    </div>
+                    <div class="form-field">
+                        <label>初来店日</label>
+                        <input type="date" name="初来店日" value="${c.firstVisitDate || ''}">
+                    </div>
+                    <div class="form-field">
+                        <label>性別</label>
+                        <select name="性別">
+                            <option value="">未選択</option>
+                            <option value="女性" ${c.gender === '女性' ? 'selected' : ''}>女性</option>
+                            <option value="男性" ${c.gender === '男性' ? 'selected' : ''}>男性</option>
+                            <option value="その他" ${c.gender === 'その他' ? 'selected' : ''}>その他</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>担当スタッフ</label>
+                        <select name="担当スタッフ">
+                            <option value="">未選択</option>
+                            <option value="唐木田 帆花" ${c.staff && c.staff.includes('唐木田') ? 'selected' : ''}>唐木田 帆花</option>
+                            <option value="玉木 愛" ${c.staff && c.staff.includes('玉木') ? 'selected' : ''}>玉木 愛</option>
+                            <option value="磯谷" ${c.staff && c.staff.includes('磯谷') ? 'selected' : ''}>磯谷</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>ステータス</label>
+                        <select name="ステータス">
+                            <option value="アクティブ" ${c.status === 'アクティブ' ? 'selected' : ''}>アクティブ</option>
+                            <option value="休眠" ${c.status === '休眠' ? 'selected' : ''}>休眠</option>
+                            <option value="離反" ${c.status === '離反' ? 'selected' : ''}>離反</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>流入元</label>
+                        <select name="流入元">
+                            <option value="">未選択</option>
+                            <option value="Web予約" ${c.source === 'Web予約' ? 'selected' : ''}>Web予約</option>
+                            <option value="紹介" ${c.source === '紹介' ? 'selected' : ''}>紹介</option>
+                            <option value="Instagram" ${c.source === 'Instagram' ? 'selected' : ''}>Instagram</option>
+                            <option value="Google" ${c.source === 'Google' ? 'selected' : ''}>Google</option>
+                            <option value="ホットペッパー" ${c.source === 'ホットペッパー' ? 'selected' : ''}>ホットペッパー</option>
+                            <option value="飛び込み" ${c.source === '飛び込み' ? 'selected' : ''}>飛び込み</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>健康状態・アレルギー</label>
+                    <textarea name="健康状態・アレルギー" rows="2">${escapeHtml(c.health || '')}</textarea>
+                </div>
+                <div class="form-field">
+                    <label>お好み・要望</label>
+                    <textarea name="お好み・要望" rows="2">${escapeHtml(c.preferences || '')}</textarea>
+                </div>
+                <div class="form-field">
+                    <label>スタッフメモ</label>
+                    <textarea name="スタッフメモ" rows="2">${escapeHtml(c.staffMemo || '')}</textarea>
+                </div>
+                <div class="form-row" style="display:flex;gap:1rem;margin-top:1rem;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="LINE登録" ${c.lineRegistered ? 'checked' : ''}> LINE登録</label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="同意書受理" ${c.consentReceived ? 'checked' : ''}> 同意書受理</label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="invoice-action-btn" id="cancel-edit">キャンセル</button>
+                    <button type="submit" class="invoice-action-btn primary">保存</button>
+                </div>
+            </form>
+        `;
+        document.getElementById('customer-modal-content').innerHTML = html;
+        document.getElementById('cancel-edit').addEventListener('click', () => openCustomerModal(c.id));
+        document.getElementById('customer-edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fd = new FormData(e.target);
+            const data = {};
+            for (const [k, v] of fd.entries()) data[k] = v;
+            // チェックボックス手動取得
+            data['LINE登録'] = e.target.querySelector('[name="LINE登録"]').checked;
+            data['同意書受理'] = e.target.querySelector('[name="同意書受理"]').checked;
+            try {
+                await API.customerUpdate(c.id, data);
+                alert('保存しました');
+                openCustomerModal(c.id);
+                _customerList = []; // 一覧キャッシュクリア
+                loadCustomers();
+            } catch (err) {
+                alert('エラー: ' + err.message);
+            }
+        });
+    }
+
+    function openTreatmentAdd(c) {
+        const todayDateTime = new Date().toISOString().slice(0, 16);
+        const html = `
+            <h3 style="font-family:var(--font-serif);color:var(--brown-dark);margin-bottom:1.5rem;font-size:1.3rem;">${escapeHtml(c.name)} さんの施術を追加</h3>
+            <form id="treatment-add-form" class="edit-form">
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label>件名</label>
+                        <input type="text" name="件名" value="${escapeHtml(c.name)} - ${todayDateTime.slice(0,10)}" required>
+                    </div>
+                    <div class="form-field">
+                        <label>来店日時</label>
+                        <input type="datetime-local" name="来店日時" value="${todayDateTime}" required>
+                    </div>
+                    <div class="form-field">
+                        <label>担当スタッフ</label>
+                        <select name="担当スタッフ">
+                            <option value="唐木田 帆花">唐木田 帆花</option>
+                            <option value="玉木 愛">玉木 愛</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>ステータス</label>
+                        <select name="ステータス">
+                            <option value="予約済">予約済</option>
+                            <option value="来店済" selected>来店済</option>
+                            <option value="キャンセル">キャンセル</option>
+                            <option value="ノーショー">ノーショー</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>料金（税込）</label>
+                        <input type="number" name="料金" value="0" min="0" step="100">
+                    </div>
+                    <div class="form-field">
+                        <label>支払方法</label>
+                        <select name="支払方法">
+                            <option value="">未選択</option>
+                            <option value="現金">現金</option>
+                            <option value="クレジット">クレジット</option>
+                            <option value="電子マネー">電子マネー</option>
+                            <option value="Squareリンク">Squareリンク</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <label>Before写真</label>
+                    <input type="file" id="before-files" multiple accept="image/*">
+                    <div class="upload-preview" id="before-preview"></div>
+                </div>
+                <div class="form-field">
+                    <label>After写真</label>
+                    <input type="file" id="after-files" multiple accept="image/*">
+                    <div class="upload-preview" id="after-preview"></div>
+                </div>
+
+                <div class="form-field">
+                    <label>詳細メモ</label>
+                    <textarea name="詳細メモ" rows="3" placeholder="例: 11mm Jカール、目尻3mm延長..."></textarea>
+                </div>
+                <div class="form-field">
+                    <label>次回提案</label>
+                    <textarea name="次回提案" rows="2" placeholder="例: 次回ブラウンミックス提案、3週間後リペア推奨"></textarea>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="invoice-action-btn" id="cancel-treatment">キャンセル</button>
+                    <button type="submit" class="invoice-action-btn primary">保存</button>
+                </div>
+            </form>
+        `;
+        document.getElementById('customer-modal-content').innerHTML = html;
+
+        document.getElementById('cancel-treatment').addEventListener('click', () => openCustomerModal(c.id));
+
+        // 画像プレビュー
+        const beforeUrls = [];
+        const afterUrls = [];
+        document.getElementById('before-files').addEventListener('change', (e) => handleFileSelect(e, beforeUrls, 'before-preview'));
+        document.getElementById('after-files').addEventListener('change', (e) => handleFileSelect(e, afterUrls, 'after-preview'));
+
+        document.getElementById('treatment-add-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '保存中...';
+            try {
+                const fd = new FormData(e.target);
+                const data = {};
+                for (const [k, v] of fd.entries()) data[k] = v;
+                data['Before写真URLs'] = beforeUrls;
+                data['After写真URLs'] = afterUrls;
+                data['顧客Id'] = c.id;
+                await API.treatmentCreate(data);
+                alert('施術記録を追加しました');
+                openCustomerModal(c.id);
+            } catch (err) {
+                alert('エラー: ' + err.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '保存';
+            }
+        });
+    }
+
+    async function handleFileSelect(e, urlArray, previewId) {
+        const files = Array.from(e.target.files || []);
+        const preview = document.getElementById(previewId);
+        for (const file of files) {
+            const placeholder = document.createElement('div');
+            placeholder.className = 'upload-thumb uploading';
+            placeholder.textContent = 'アップロード中...';
+            preview.appendChild(placeholder);
+            try {
+                const result = await API.uploadFile(file);
+                placeholder.classList.remove('uploading');
+                placeholder.textContent = '';
+                placeholder.style.backgroundImage = `url('${result.url}')`;
+                urlArray.push(result.url);
+            } catch (err) {
+                placeholder.textContent = 'エラー: ' + err.message;
+                placeholder.style.color = 'red';
+            }
+        }
     }
 
     function renderTreatments(treatments) {

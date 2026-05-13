@@ -34,6 +34,40 @@ const API = {
     // Customers
     customerList() { return this.request('/api/customers/list'); },
     customerDetail(id) { return this.request('/api/customers/' + id); },
+    customerUpdate(id, data) {
+        return this._fetchJson('/api/customers/' + id, { method: 'PATCH', body: data });
+    },
+    treatmentCreate(data) {
+        return this._fetchJson('/api/treatments', { method: 'POST', body: data });
+    },
+    treatmentUpdate(id, data) {
+        return this._fetchJson('/api/treatments/' + id, { method: 'PATCH', body: data });
+    },
+    async uploadFile(file) {
+        const fd = new FormData();
+        fd.append('file', file);
+        const r = await fetch(`${CONFIG.API_BASE}/api/upload`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${AUTH.getToken()}` },
+            body: fd,
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'アップロード失敗');
+        return data;
+    },
+    async _fetchJson(path, { method, body }) {
+        const r = await fetch(`${CONFIG.API_BASE}${path}`, {
+            method,
+            headers: {
+                'Authorization': `Bearer ${AUTH.getToken()}`,
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : undefined,
+        });
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(data.error || 'エラー');
+        return data;
+    },
 
     // Public (no auth)
     async staffList() {

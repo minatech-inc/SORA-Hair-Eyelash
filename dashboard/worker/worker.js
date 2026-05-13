@@ -15,6 +15,10 @@
  *   GET  /api/attendance/summary    月次勤務時間集計
  *   GET  /api/customers/list        顧客一覧
  *   GET  /api/customers/{id}        顧客詳細（施術履歴含む）
+ *   PATCH /api/customers/{id}       顧客情報更新
+ *   POST /api/treatments            施術履歴新規作成
+ *   PATCH /api/treatments/{id}      施術履歴更新
+ *   POST /api/upload                ファイルをR2にアップロード（写真等）
  *   GET  /api/invoices/list         請求書一覧（オーナー視点）
  *   POST /api/invoices/generate     月末請求書を一括生成
  *   POST /api/invoices/owner-approve オーナー承認
@@ -104,7 +108,24 @@ export default {
       // Customer endpoints
       if (url.pathname === '/api/customers/list') return await handleCustomerList(env, cors);
       const customerMatch = url.pathname.match(/^\/api\/customers\/([a-f0-9-]+)$/);
-      if (customerMatch) return await handleCustomerDetail(customerMatch[1], env, cors);
+      if (customerMatch) {
+        if (request.method === 'PATCH') return await handleCustomerUpdate(customerMatch[1], request, env, cors);
+        return await handleCustomerDetail(customerMatch[1], env, cors);
+      }
+
+      // Treatment endpoints
+      if (url.pathname === '/api/treatments' && request.method === 'POST') {
+        return await handleTreatmentCreate(request, env, cors);
+      }
+      const treatmentMatch = url.pathname.match(/^\/api\/treatments\/([a-f0-9-]+)$/);
+      if (treatmentMatch && request.method === 'PATCH') {
+        return await handleTreatmentUpdate(treatmentMatch[1], request, env, cors);
+      }
+
+      // Upload to R2
+      if (url.pathname === '/api/upload' && request.method === 'POST') {
+        return await handleUpload(request, env, cors);
+      }
 
       // Invoice endpoints
       if (url.pathname === '/api/invoices/list')           return await handleInvoiceList(env, cors);
@@ -693,6 +714,166 @@ async function handleCustomerDetail(customerId, env, cors) {
   delete detail.treatmentRelations;
 
   return jsonResponse({ customer: detail }, 200, cors);
+}
+
+async function handleCustomerUpdate(customerId, request, env, cors) {
+  const body = await request.json();
+  const props = {};
+
+  // テキストフィールド
+  const textFields = ['フリガナ', '健康状態・アレルギー', 'お好み・要望', 'スタッフメモ'];
+  for (const f of textFields) {
+    if (body[f] !== undefined) {
+      props[f] = { rich_text: [{ text: { content: body[f] || '' } }] };
+    }
+  }
+
+  // 名前 (Title)
+  if (body['お名前'] !== undefined) {
+    props['お名前'] = { title: [{ text: { content: body['お名前'] } }] };
+  }
+
+  if (body['電話番号'] !== undefined) props['電話番号'] = { phone_number: body['電話番号'] || null };
+  if (body['メールアドレス'] !== undefined) props['メールアドレス'] = { email: body['メールアドレス'] || null };
+  if (body['生年月日'] !== undefined) props['生年月日'] = body['生年月日'] ? { date: { start: body['生年月日'] } } : { date: null };
+  if (body['初来店日'] !== undefined) props['初来店日'] = body['初来店日'] ? { date: { start: body['初来店日'] } } : { date: null };
+
+  if (body['性別'] !== undefined) props['性別'] = body['性別'] ? { select: { name: body['性別'] } } : { select: null };
+  if (body['担当スタッフ'] !== undefined) props['担当スタッフ'] = body['担当スタッフ'] ? { select: { name: body['担当スタッフ'] } } : { select: null };
+  if (body['ステータス'] !== undefined) props['ステータス'] = body['ステータス'] ? { select: { name: body['ステータス'] } } : { select: null };
+  if (body['流入元'] !== undefined) props['流入元'] = body['流入元'] ? { select: { name: body['流入元'] } } : { select: null };
+
+  if (body['LINE登録'] !== undefined) props['LINE登録'] = { checkbox: !!body['LINE登録'] };
+  if (body['同意書受理'] !== undefined) props['同意書受理'] = { checkbox: !!body['同意書受理'] };
+
+  if (Array.isArray(body['タグ'])) {
+    props['タグ'] = { multi_select: body['タグ'].map(n => ({ name: n })) };
+  }
+  if (Array.isArray(body['撮影同意'])) {
+    props['撮影同意'] = { multi_select: body['撮影同意'].map(n => ({ name: n })) };
+  }
+
+  await notionFetch(env, `/pages/${customerId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties: props }),
+  });
+  return jsonResponse({ success: true }, 200, cors);
+}
+
+// =====================================================
+// Treatment endpoints
+// =====================================================
+
+function buildTreatmentProperties(body) {
+  const props = {};
+  if (body['件名']) props['件名'] = { title: [{ text: { content: body['件名'] } }] };
+  if (body['来店日時']) props['来店日時'] = { date: { start: body['来店日時'] } };
+  if (body['担当スタッフ']) props['担当スタッフ'] = { select: { name: body['担当スタッフ'] } };
+  if (body['ステータス']) props['ステータス'] = { select: { name: body['ステータス'] } };
+  if (body['支払方法']) props['支払方法'] = { select: { name: body['支払方法'] } };
+  if (body['料金'] !== undefined) props['料金'] = { number: Number(body['料金']) };
+
+  if (body['詳細メモ'] !== undefined) props['詳細メモ'] = { rich_text: [{ text: { content: body['詳細メモ'] || '' } }] };
+  if (body['次回提案'] !== undefined) props['次回提案'] = { rich_text: [{ text: { content: body['次回提案'] || '' } }] };
+
+  if (Array.isArray(body['メニューIds']) && body['メニューIds'].length) {
+    props['メニュー'] = { relation: body['メニューIds'].map(id => ({ id })) };
+  }
+  if (body['顧客Id']) {
+    // 関係プロパティ名: Notion 自動命名で "Related to 顧客カルテ (施術履歴)" 等になる場合あり
+    // ここではキーをそのまま渡すと壊れる可能性があるため、別途リレーション名の取得が必要。
+    // 動作上、施術履歴側からのリレーション設定が完了している前提
+  }
+
+  if (Array.isArray(body['Before写真URLs'])) {
+    props['Before写真'] = {
+      files: body['Before写真URLs'].map(url => ({
+        name: 'photo.jpg',
+        type: 'external',
+        external: { url }
+      }))
+    };
+  }
+  if (Array.isArray(body['After写真URLs'])) {
+    props['After写真'] = {
+      files: body['After写真URLs'].map(url => ({
+        name: 'photo.jpg',
+        type: 'external',
+        external: { url }
+      }))
+    };
+  }
+  return props;
+}
+
+async function getCustomerRelationPropertyName(env) {
+  // 施術履歴DB上の顧客カルテへのリレーションプロパティ名を取得
+  const db = await notionFetch(env, `/databases/${env.TREATMENT_DB_ID}`);
+  for (const [name, prop] of Object.entries(db.properties || {})) {
+    if (prop.type === 'relation' && prop.relation?.database_id?.replace(/-/g, '') === env.CUSTOMER_DB_ID.replace(/-/g, '')) {
+      return name;
+    }
+  }
+  return null;
+}
+
+async function handleTreatmentCreate(request, env, cors) {
+  const body = await request.json();
+  const props = buildTreatmentProperties(body);
+
+  if (body['顧客Id']) {
+    const relName = await getCustomerRelationPropertyName(env);
+    if (relName) {
+      props[relName] = { relation: [{ id: body['顧客Id'] }] };
+    }
+  }
+
+  const r = await notionFetch(env, '/pages', {
+    method: 'POST',
+    body: JSON.stringify({
+      parent: { database_id: env.TREATMENT_DB_ID },
+      properties: props,
+    }),
+  });
+  return jsonResponse({ success: true, id: r.id }, 200, cors);
+}
+
+async function handleTreatmentUpdate(treatmentId, request, env, cors) {
+  const body = await request.json();
+  const props = buildTreatmentProperties(body);
+  await notionFetch(env, `/pages/${treatmentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties: props }),
+  });
+  return jsonResponse({ success: true }, 200, cors);
+}
+
+// =====================================================
+// File upload to R2
+// =====================================================
+
+async function handleUpload(request, env, cors) {
+  if (!env.PHOTOS) {
+    return jsonResponse({ error: 'R2 bucket not configured. Set PHOTOS binding.' }, 500, cors);
+  }
+  const formData = await request.formData();
+  const file = formData.get('file');
+  if (!file || typeof file === 'string') {
+    return jsonResponse({ error: 'file required (multipart/form-data)' }, 400, cors);
+  }
+
+  // ファイル名/拡張子
+  const origName = file.name || 'upload';
+  const ext = (origName.includes('.') ? origName.split('.').pop() : 'bin').toLowerCase().slice(0, 8);
+  const key = `treatments/${new Date().toISOString().slice(0, 10)}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+  await env.PHOTOS.put(key, file.stream(), {
+    httpMetadata: { contentType: file.type || 'application/octet-stream' },
+  });
+
+  const publicBase = env.PHOTOS_PUBLIC_BASE || `https://photos-placeholder.invalid`;
+  const publicUrl = `${publicBase.replace(/\/$/, '')}/${key}`;
+  return jsonResponse({ url: publicUrl, key }, 200, cors);
 }
 
 // =====================================================
