@@ -215,34 +215,36 @@
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
     <script>
         const COUNSELING_URL = 'https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html';
         const QR_SIZE = 280;
 
-        // QR生成（canvas）
-        QRCode.toCanvas(document.getElementById('qrcode'), COUNSELING_URL, {
-            width: QR_SIZE,
-            margin: 1,
-            errorCorrectionLevel: 'H',
-            color: {
-                dark: '#6b5641',    // brown-dark
-                light: '#ffffff'
-            }
-        }, function (err) {
-            if (err) {
-                console.error(err);
-                document.getElementById('qrcode').innerHTML = 'QR生成失敗: ' + err.message;
-            }
-        });
+        // QR生成
+        try {
+            new QRCode(document.getElementById('qrcode'), {
+                text: COUNSELING_URL,
+                width: QR_SIZE,
+                height: QR_SIZE,
+                colorDark: '#6b5641',
+                colorLight: '#ffffff',
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        } catch (err) {
+            console.error(err);
+            document.getElementById('qrcode').innerHTML = 'QR生成失敗: ' + err.message;
+        }
 
         // ダウンロード機能
         function downloadQR() {
-            const canvas = document.querySelector('#qrcode canvas');
-            if (!canvas) return;
+            const wrap = document.getElementById('qrcode');
+            const img = wrap.querySelector('img');
+            const canvas = wrap.querySelector('canvas');
             const link = document.createElement('a');
             link.download = 'SORA-counseling-qr.png';
-            link.href = canvas.toDataURL('image/png');
+            if (img) link.href = img.src;
+            else if (canvas) link.href = canvas.toDataURL('image/png');
+            else return;
             link.click();
         }
     </script>

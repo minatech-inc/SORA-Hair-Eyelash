@@ -383,31 +383,43 @@
         if (!_qrRendered) {
             target.innerHTML = '';
             if (typeof QRCode === 'undefined') {
-                target.innerHTML = '<div style="color:#b85c4e;">QRライブラリ読み込み失敗</div>';
+                target.innerHTML = '<div style="color:#b85c4e;padding:2rem;">QRライブラリ読み込み失敗</div>';
                 return;
             }
-            QRCode.toCanvas(target, 'https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html', {
-                width: 260,
-                margin: 1,
-                errorCorrectionLevel: 'H',
-                color: { dark: '#6b5641', light: '#ffffff' }
-            }, function (err) {
-                if (err) {
-                    target.innerHTML = '<div style="color:#b85c4e;">QR生成エラー: ' + err.message + '</div>';
-                }
-            });
-            _qrRendered = true;
+            try {
+                new QRCode(target, {
+                    text: 'https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html',
+                    width: 260,
+                    height: 260,
+                    colorDark: '#6b5641',
+                    colorLight: '#ffffff',
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+                _qrRendered = true;
+            } catch (e) {
+                target.innerHTML = '<div style="color:#b85c4e;padding:2rem;">QR生成エラー: ' + e.message + '</div>';
+                return;
+            }
 
             document.getElementById('qr-print-btn').addEventListener('click', () => {
                 window.open('https://minatech-inc.github.io/SORA-Hair-Eyelash/qr-counseling.html', '_blank');
             });
             document.getElementById('qr-download-btn').addEventListener('click', () => {
+                const img = target.querySelector('img');
+                if (img) {
+                    const a = document.createElement('a');
+                    a.download = 'SORA-counseling-qr.png';
+                    a.href = img.src;
+                    a.click();
+                    return;
+                }
                 const canvas = target.querySelector('canvas');
-                if (!canvas) return;
-                const a = document.createElement('a');
-                a.download = 'SORA-counseling-qr.png';
-                a.href = canvas.toDataURL('image/png');
-                a.click();
+                if (canvas) {
+                    const a = document.createElement('a');
+                    a.download = 'SORA-counseling-qr.png';
+                    a.href = canvas.toDataURL('image/png');
+                    a.click();
+                }
             });
         }
     }
