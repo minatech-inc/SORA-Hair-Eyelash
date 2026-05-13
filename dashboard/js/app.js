@@ -69,7 +69,7 @@
         const el = document.getElementById(`page-${page}`);
         if (el) el.style.display = 'block';
 
-        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理', invoices: '請求書', customers: '顧客カルテ' };
+        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理', invoices: '請求書', customers: '顧客カルテ', qr: 'QRコード' };
         document.getElementById('page-title').textContent = titles[page] || page;
         loadPage(page);
     }
@@ -101,6 +101,7 @@
                 case 'attendance': await loadAttendance(); break;
                 case 'invoices': await loadInvoices(); break;
                 case 'customers': await loadCustomers(); break;
+                case 'qr': await loadQR(); break;
             }
             updateLastUpdated();
         } catch (err) {
@@ -370,6 +371,45 @@
                 </tr>
             `;
         }).join('');
+    }
+
+    // ============================================
+    // QR Page
+    // ============================================
+    let _qrRendered = false;
+    async function loadQR() {
+        const target = document.getElementById('qrcode-dashboard');
+        if (!target) return;
+        if (!_qrRendered) {
+            target.innerHTML = '';
+            if (typeof QRCode === 'undefined') {
+                target.innerHTML = '<div style="color:#b85c4e;">QRライブラリ読み込み失敗</div>';
+                return;
+            }
+            QRCode.toCanvas(target, 'https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html', {
+                width: 260,
+                margin: 1,
+                errorCorrectionLevel: 'H',
+                color: { dark: '#6b5641', light: '#ffffff' }
+            }, function (err) {
+                if (err) {
+                    target.innerHTML = '<div style="color:#b85c4e;">QR生成エラー: ' + err.message + '</div>';
+                }
+            });
+            _qrRendered = true;
+
+            document.getElementById('qr-print-btn').addEventListener('click', () => {
+                window.open('https://minatech-inc.github.io/SORA-Hair-Eyelash/qr-counseling.html', '_blank');
+            });
+            document.getElementById('qr-download-btn').addEventListener('click', () => {
+                const canvas = target.querySelector('canvas');
+                if (!canvas) return;
+                const a = document.createElement('a');
+                a.download = 'SORA-counseling-qr.png';
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+            });
+        }
     }
 
     // ============================================

@@ -66,6 +66,15 @@
                 </svg>
                 <span>請求書</span>
             </a>
+            <a href="#qr" class="nav-item" data-page="qr">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="7" height="7"/>
+                    <rect x="14" y="3" width="7" height="7"/>
+                    <rect x="3" y="14" width="7" height="7"/>
+                    <path d="M14 14h3v3h-3zM20 14h1v1h-1zM14 20h3v1h-3zM20 17h1v4"/>
+                </svg>
+                <span>QRコード</span>
+            </a>
         </nav>
         <div class="sidebar-footer">
             <button class="btn-logout" id="btn-logout">ログアウト</button>
@@ -199,7 +208,31 @@
             </div>
         </section>
 
-<!-- CUSTOMERS page -->
+<!-- QR page -->
+        <section class="page" id="page-qr" style="display:none;">
+            <div class="qr-page-wrap">
+                <div class="qr-page-card">
+                    <div class="qr-page-title">カウンセリングシート</div>
+                    <div class="qr-page-subtitle">Counseling Sheet QR</div>
+                    <div class="qr-page-divider"></div>
+                    <div class="qr-page-code-wrap">
+                        <div id="qrcode-dashboard"></div>
+                    </div>
+                    <div class="qr-page-url">https://minatech-inc.github.io/SORA-Hair-Eyelash/counseling.html</div>
+                    <div class="qr-page-desc">
+                        サロンの受付やテーブルに印刷して設置することで、<br>
+                        お客様がスマートフォンで読み取り、事前に記入が可能になります。
+                    </div>
+                    <div class="qr-page-actions">
+                        <button class="qr-btn-action" id="qr-print-btn">印刷する</button>
+                        <button class="qr-btn-action secondary" id="qr-download-btn">画像ダウンロード</button>
+                        <a href="https://minatech-inc.github.io/SORA-Hair-Eyelash/qr-counseling.html" target="_blank" class="qr-btn-action secondary">印刷用ページを開く</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CUSTOMERS page -->
         <section class="page" id="page-customers" style="display:none;">
             <div class="customer-toolbar">
                 <div class="customer-tabs">
@@ -394,6 +427,7 @@
         </section>
     </main>
 
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
     <script src="js/config.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/api.js"></script>
