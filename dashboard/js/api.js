@@ -31,6 +31,10 @@ const API = {
     attendanceToday() { return this.request('/api/attendance/today'); },
     attendanceSummary() { return this.request('/api/attendance/summary'); },
 
+    // Customers
+    customerList() { return this.request('/api/customers/list'); },
+    customerDetail(id) { return this.request('/api/customers/' + id); },
+
     // Public (no auth)
     async staffList() {
         const r = await fetch(`${CONFIG.API_BASE}/api/attendance/staff-list`);

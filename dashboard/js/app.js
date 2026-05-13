@@ -69,7 +69,7 @@
         const el = document.getElementById(`page-${page}`);
         if (el) el.style.display = 'block';
 
-        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理', invoices: '請求書' };
+        const titles = { home: 'ホーム', sales: '売上', staff: 'スタッフ', menu: 'メニュー', attendance: '勤怠管理', invoices: '請求書', customers: '顧客カルテ' };
         document.getElementById('page-title').textContent = titles[page] || page;
         loadPage(page);
     }
@@ -100,6 +100,7 @@
                 case 'menu': await loadMenu(); break;
                 case 'attendance': await loadAttendance(); break;
                 case 'invoices': await loadInvoices(); break;
+                case 'customers': await loadCustomers(); break;
             }
             updateLastUpdated();
         } catch (err) {
@@ -368,6 +369,204 @@
                     <td class="num">${wage}</td>
                 </tr>
             `;
+        }).join('');
+    }
+
+    // ============================================
+    // Customers
+    // ============================================
+    let _customerFilter = 'all';
+    let _customerList = [];
+
+    async function loadCustomers() {
+        bindCustomerHandlers();
+        const data = await API.customerList();
+        _customerList = data.customers || [];
+        renderCustomers();
+    }
+
+    function bindCustomerHandlers() {
+        if (window._customerHandlersBound) return;
+        window._customerHandlersBound = true;
+
+        document.querySelectorAll('.customer-tab').forEach(t => {
+            t.addEventListener('click', () => {
+                document.querySelectorAll('.customer-tab').forEach(b => b.classList.remove('active'));
+                t.classList.add('active');
+                _customerFilter = t.dataset.cfilter;
+                renderCustomers();
+            });
+        });
+
+        document.getElementById('customer-search').addEventListener('input', renderCustomers);
+
+        document.getElementById('customer-modal-backdrop').addEventListener('click', closeCustomerModal);
+        document.getElementById('customer-modal-close').addEventListener('click', closeCustomerModal);
+    }
+
+    function renderCustomers() {
+        const search = document.getElementById('customer-search').value.toLowerCase();
+        let list = _customerList.slice();
+
+        const now = new Date();
+        const today = now.toISOString().slice(0, 10);
+        const monthAgo = new Date(now);
+        monthAgo.setMonth(monthAgo.getMonth() - 1);
+        const monthAgoStr = monthAgo.toISOString().slice(0, 10);
+        const sixtyDaysAgo = new Date(now);
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+        const sixtyAgoStr = sixtyDaysAgo.toISOString().slice(0, 10);
+
+        if (_customerFilter === 'regular') list = list.filter(c => c.visitCount >= 5);
+        if (_customerFilter === 'new') list = list.filter(c => c.firstVisitDate && c.firstVisitDate >= monthAgoStr);
+        if (_customerFilter === 'follow') list = list.filter(c => c.status === 'アクティブ' && c.lastVisitDate && c.lastVisitDate < sixtyAgoStr);
+
+        if (search) {
+            list = list.filter(c =>
+                (c.name || '').toLowerCase().includes(search) ||
+                (c.kana || '').toLowerCase().includes(search)
+            );
+        }
+
+        const container = document.getElementById('customer-grid');
+        if (list.length === 0) {
+            container.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#999;padding:3rem;">該当する顧客なし</div>';
+            return;
+        }
+
+        container.innerHTML = list.map(c => `
+            <div class="customer-card" data-customer-id="${c.id}">
+                <div class="customer-card-header">
+                    <div class="customer-avatar">${escapeHtml(c.name.charAt(0))}</div>
+                    <div>
+                        <div class="customer-name">${escapeHtml(c.name)}</div>
+                        <div class="customer-kana">${escapeHtml(c.kana || '')}</div>
+                    </div>
+                </div>
+                <div class="customer-stats">
+                    <div>
+                        <div class="customer-stat-label">来店回数</div>
+                        <div class="customer-stat-value">${c.visitCount}回</div>
+                    </div>
+                    <div>
+                        <div class="customer-stat-label">最終来店</div>
+                        <div class="customer-stat-value">${formatShortDate(c.lastVisitDate) || '-'}</div>
+                    </div>
+                    <div>
+                        <div class="customer-stat-label">累計</div>
+                        <div class="customer-stat-value">${FORMAT.yen(c.totalSpent)}</div>
+                    </div>
+                    <div>
+                        <div class="customer-stat-label">担当</div>
+                        <div class="customer-stat-value">${escapeHtml(c.staff || '-')}</div>
+                    </div>
+                </div>
+                <div class="customer-tags">
+                    ${(c.tags || []).slice(0, 4).map(t => `<span class="customer-tag ${tagClass(t)}">${escapeHtml(t)}</span>`).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        container.querySelectorAll('[data-customer-id]').forEach(el => {
+            el.addEventListener('click', () => openCustomerModal(el.dataset.customerId));
+        });
+    }
+
+    function tagClass(tag) {
+        if (['アレルギー', '花粉症', '敏感肌'].includes(tag)) return 'alert';
+        if (['コンタクト'].includes(tag)) return 'contact';
+        if (['常連', 'VIP'].includes(tag)) return 'regular';
+        return '';
+    }
+
+    function formatShortDate(s) {
+        if (!s) return '';
+        const d = new Date(s);
+        return `${d.getMonth() + 1}/${d.getDate()}`;
+    }
+
+    async function openCustomerModal(id) {
+        document.getElementById('customer-modal').style.display = 'flex';
+        document.getElementById('customer-modal-content').innerHTML = '<div class="loading-text">読み込み中...</div>';
+        try {
+            const data = await API.customerDetail(id);
+            renderCustomerDetail(data.customer);
+        } catch (e) {
+            document.getElementById('customer-modal-content').innerHTML = `<div style="color:#b85c4e;">エラー: ${escapeHtml(e.message)}</div>`;
+        }
+    }
+
+    function closeCustomerModal() {
+        document.getElementById('customer-modal').style.display = 'none';
+    }
+
+    function renderCustomerDetail(c) {
+        const html = `
+            <div class="customer-detail-header">
+                <div class="customer-avatar customer-detail-avatar">${escapeHtml(c.name.charAt(0))}</div>
+                <div>
+                    <div class="customer-detail-name">${escapeHtml(c.name)}</div>
+                    <div class="customer-detail-sub">
+                        ${escapeHtml(c.kana || '')} ${c.birthday ? '・ ' + c.birthday + ' 生' : ''}
+                        ${c.firstVisitDate ? '・ 初来店 ' + c.firstVisitDate : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="customer-detail-props">
+                <div class="detail-prop"><div class="detail-prop-label">📞 電話</div><div class="detail-prop-value">${escapeHtml(c.phone || '-')}</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">✉️ メール</div><div class="detail-prop-value">${escapeHtml(c.email || '-')}</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">⭐ 来店回数</div><div class="detail-prop-value">${c.visitCount} 回</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">💰 累計売上</div><div class="detail-prop-value">${FORMAT.yen(c.totalSpent)}</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">📅 最終来店</div><div class="detail-prop-value">${c.lastVisitDate || '-'}</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">👤 担当</div><div class="detail-prop-value">${escapeHtml(c.staff || '-')}</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">🏷️ タグ</div><div class="detail-prop-value">${(c.tags || []).join('、') || '-'}</div></div>
+                <div class="detail-prop"><div class="detail-prop-label">📊 ステータス</div><div class="detail-prop-value">${escapeHtml(c.status || '-')}</div></div>
+            </div>
+
+            ${c.health ? `
+            <div class="detail-callout alert">
+                <div class="detail-callout-label">⚠️ 健康状態・アレルギー</div>
+                ${escapeHtml(c.health)}
+            </div>` : ''}
+
+            ${c.preferences ? `
+            <div class="detail-callout">
+                <div class="detail-callout-label">🌿 お好み・要望</div>
+                ${escapeHtml(c.preferences)}
+            </div>` : ''}
+
+            ${c.staffMemo ? `
+            <div class="detail-callout">
+                <div class="detail-callout-label">📝 スタッフメモ</div>
+                ${escapeHtml(c.staffMemo)}
+            </div>` : ''}
+
+            <div class="detail-section-title">📸 施術履歴（${(c.treatments || []).length}件）</div>
+            ${renderTreatments(c.treatments || [])}
+        `;
+        document.getElementById('customer-modal-content').innerHTML = html;
+    }
+
+    function renderTreatments(treatments) {
+        if (treatments.length === 0) return '<div style="color:#999;padding:1rem;text-align:center;">施術履歴なし</div>';
+        return treatments.map(t => {
+            const photos = [...(t.beforePhotos || []), ...(t.afterPhotos || [])];
+            return `
+            <div class="treatment-item">
+                <div class="treatment-header">
+                    <div class="treatment-date">${FORMAT.dateLong(t.date)}</div>
+                    <div class="treatment-fee">${FORMAT.yen(t.fee)} <span class="tag" style="margin-left:0.5rem;">${escapeHtml(t.status)}</span></div>
+                </div>
+                <div class="treatment-meta">${escapeHtml(t.staff || '')} / ${escapeHtml(t.menu || '')}</div>
+                ${photos.length > 0 ? `
+                <div class="treatment-photos">
+                    ${photos.map(p => `<div class="treatment-photo" style="background-image:url('${escapeHtml(p)}')"></div>`).join('')}
+                </div>` : ''}
+                ${t.memo ? `<div class="treatment-memo"><strong>メモ:</strong> ${escapeHtml(t.memo)}</div>` : ''}
+                ${t.nextProposal ? `<div class="treatment-memo"><strong>次回提案:</strong> ${escapeHtml(t.nextProposal)}</div>` : ''}
+            </div>
+        `;
         }).join('');
     }
 

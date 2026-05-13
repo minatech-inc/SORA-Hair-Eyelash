@@ -45,6 +45,14 @@
                 </svg>
                 <span>メニュー</span>
             </a>
+            <a href="#customers" class="nav-item" data-page="customers">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 11a4 4 0 100-8 4 4 0 000 8z"/>
+                    <path d="M4 21a8 8 0 0116 0"/>
+                    <circle cx="18" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>顧客カルテ</span>
+            </a>
             <a href="#attendance" class="nav-item" data-page="attendance">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>
@@ -188,6 +196,34 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </section>
+
+<!-- CUSTOMERS page -->
+        <section class="page" id="page-customers" style="display:none;">
+            <div class="customer-toolbar">
+                <div class="customer-tabs">
+                    <button class="customer-tab active" data-cfilter="all">全顧客</button>
+                    <button class="customer-tab" data-cfilter="regular">⭐ 常連様</button>
+                    <button class="customer-tab" data-cfilter="new">🌱 新規</button>
+                    <button class="customer-tab" data-cfilter="follow">⚠️ 要フォロー</button>
+                </div>
+                <div class="customer-search-wrap">
+                    <input type="text" id="customer-search" class="customer-search" placeholder="名前で検索...">
+                </div>
+            </div>
+
+            <div class="customer-grid" id="customer-grid"></div>
+
+            <!-- 顧客詳細モーダル -->
+            <div class="customer-modal" id="customer-modal" style="display:none;">
+                <div class="customer-modal-backdrop" id="customer-modal-backdrop"></div>
+                <div class="customer-modal-card">
+                    <button class="customer-modal-close" id="customer-modal-close">×</button>
+                    <div id="customer-modal-content">
+                        <div class="loading-text">読み込み中...</div>
+                    </div>
+                </div>
             </div>
         </section>
 

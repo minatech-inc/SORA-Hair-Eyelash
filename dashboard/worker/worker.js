@@ -13,6 +13,8 @@
  *   GET  /api/recent                最近の施術記録（10件）
  *   GET  /api/attendance/today      今日の打刻履歴
  *   GET  /api/attendance/summary    月次勤務時間集計
+ *   GET  /api/customers/list        顧客一覧
+ *   GET  /api/customers/{id}        顧客詳細（施術履歴含む）
  *   GET  /api/invoices/list         請求書一覧（オーナー視点）
  *   POST /api/invoices/generate     月末請求書を一括生成
  *   POST /api/invoices/owner-approve オーナー承認
@@ -98,6 +100,11 @@ export default {
       if (url.pathname === '/api/attendance/punch')      return await handlePunch(request, env, cors);
       if (url.pathname === '/api/attendance/today')      return await handleAttendanceToday(env, cors);
       if (url.pathname === '/api/attendance/summary')    return await handleAttendanceSummary(env, cors);
+
+      // Customer endpoints
+      if (url.pathname === '/api/customers/list') return await handleCustomerList(env, cors);
+      const customerMatch = url.pathname.match(/^\/api\/customers\/([a-f0-9-]+)$/);
+      if (customerMatch) return await handleCustomerDetail(customerMatch[1], env, cors);
 
       // Invoice endpoints
       if (url.pathname === '/api/invoices/list')           return await handleInvoiceList(env, cors);
@@ -596,6 +603,96 @@ async function handleAttendanceSummary(env, cors) {
   summary.sort((a, b) => b.totalMinutes - a.totalMinutes);
 
   return jsonResponse({ summary, month: thisYM }, 200, cors);
+}
+
+// =====================================================
+// Customer endpoints
+// =====================================================
+
+function formatCustomer(rec, withDetails = false) {
+  const props = rec.properties || {};
+  const titleProp = Object.values(props).find(v => v.type === 'title');
+  const name = (titleProp?.title || []).map(t => t.plain_text).join('');
+  const get = (k, type) => props[k]?.[type];
+  const getRichText = (k) => (props[k]?.rich_text || []).map(t => t.plain_text).join('');
+  const getRollupNumber = (k) => props[k]?.rollup?.number || 0;
+  const getRollupDate = (k) => props[k]?.rollup?.date?.start || '';
+
+  const base = {
+    id: rec.id,
+    name,
+    kana: getRichText('フリガナ'),
+    phone: get('電話番号', 'phone_number') || '',
+    email: get('メールアドレス', 'email') || '',
+    birthday: get('生年月日', 'date')?.start || '',
+    gender: get('性別', 'select')?.name || '',
+    firstVisitDate: get('初来店日', 'date')?.start || '',
+    lastVisitDate: getRollupDate('最終来店日'),
+    visitCount: getRollupNumber('来店回数'),
+    totalSpent: getRollupNumber('累計売上'),
+    tags: (get('タグ', 'multi_select') || []).map(t => t.name),
+    staff: get('担当スタッフ', 'select')?.name || '',
+    status: get('ステータス', 'select')?.name || '',
+    source: get('流入元', 'select')?.name || '',
+    lineRegistered: get('LINE登録', 'checkbox') || false,
+    consentReceived: get('同意書受理', 'checkbox') || false,
+  };
+
+  if (withDetails) {
+    base.health = getRichText('健康状態・アレルギー');
+    base.preferences = getRichText('お好み・要望');
+    base.staffMemo = getRichText('スタッフメモ');
+    base.photoConsent = (get('撮影同意', 'multi_select') || []).map(t => t.name);
+    base.treatmentRelations = (get('施術履歴', 'relation') || []).map(r => r.id);
+  }
+
+  return base;
+}
+
+async function handleCustomerList(env, cors) {
+  const records = await queryAll(env, env.CUSTOMER_DB_ID);
+  const customers = records.map(r => formatCustomer(r))
+    .sort((a, b) => (b.lastVisitDate || '').localeCompare(a.lastVisitDate || ''));
+  return jsonResponse({ customers }, 200, cors);
+}
+
+async function handleCustomerDetail(customerId, env, cors) {
+  const customer = await notionFetch(env, `/pages/${customerId}`);
+  const detail = formatCustomer(customer, true);
+
+  // 施術履歴を取得
+  const menuLookup = await fetchMenuLookup(env);
+  const treatments = [];
+  for (const treatmentId of detail.treatmentRelations) {
+    try {
+      const t = await notionFetch(env, `/pages/${treatmentId}`);
+      const tProps = t.properties || {};
+      const titleProp = Object.values(tProps).find(v => v.type === 'title');
+      const title = (titleProp?.title || []).map(p => p.plain_text).join('');
+      const menuRel = tProps['メニュー']?.relation || [];
+      const menuNames = menuRel.map(m => menuLookup[m.id] || '不明');
+      treatments.push({
+        id: t.id,
+        title,
+        date: tProps['来店日時']?.date?.start || '',
+        staff: tProps['担当スタッフ']?.select?.name || '',
+        menu: menuNames.join(', '),
+        fee: tProps['料金']?.number || 0,
+        status: tProps['ステータス']?.select?.name || '',
+        beforePhotos: (tProps['Before写真']?.files || []).map(f => f.file?.url || f.external?.url),
+        afterPhotos: (tProps['After写真']?.files || []).map(f => f.file?.url || f.external?.url),
+        memo: (tProps['詳細メモ']?.rich_text || []).map(p => p.plain_text).join(''),
+        nextProposal: (tProps['次回提案']?.rich_text || []).map(p => p.plain_text).join(''),
+      });
+    } catch (e) {
+      console.error('Treatment fetch error:', e);
+    }
+  }
+  treatments.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  detail.treatments = treatments;
+  delete detail.treatmentRelations;
+
+  return jsonResponse({ customer: detail }, 200, cors);
 }
 
 // =====================================================
