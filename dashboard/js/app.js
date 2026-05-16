@@ -166,14 +166,14 @@
         const tbody = document.querySelector('#recent-table tbody');
         tbody.innerHTML = recent.recent.map(r => `
             <tr>
-                <td>${FORMAT.dateLong(r.date)}</td>
-                <td>${escapeHtml(r.title)}</td>
-                <td>${escapeHtml(r.staff || '-')}</td>
-                <td>${escapeHtml(r.menu || '-')}</td>
-                <td class="num">${FORMAT.yen(r.fee)}</td>
-                <td><span class="tag">${escapeHtml(r.status || '-')}</span></td>
+                <td data-label="日時">${FORMAT.dateLong(r.date)}</td>
+                <td data-label="件名">${escapeHtml(r.title)}</td>
+                <td data-label="担当">${escapeHtml(r.staff || '-')}</td>
+                <td data-label="メニュー">${escapeHtml(r.menu || '-')}</td>
+                <td data-label="料金" class="num">${FORMAT.yen(r.fee)}</td>
+                <td data-label="状態"><span class="tag">${escapeHtml(r.status || '-')}</span></td>
             </tr>
-        `).join('') || '<tr><td colspan="6" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
+        `).join('') || '<tr><td colspan="6" class="empty-cell" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
     }
 
     async function loadSales() {
@@ -204,13 +204,13 @@
         const tbody = document.querySelector('#staff-table tbody');
         tbody.innerHTML = data.staff.map((s, i) => `
             <tr>
-                <td>${i + 1}</td>
-                <td>${escapeHtml(s.name)}</td>
-                <td class="num">${FORMAT.yen(s.sales)}</td>
-                <td class="num">${s.count}</td>
-                <td class="num">${FORMAT.yen(s.count ? Math.floor(s.sales / s.count) : 0)}</td>
+                <td data-label="順位">${i + 1}</td>
+                <td data-label="スタッフ">${escapeHtml(s.name)}</td>
+                <td data-label="売上" class="num">${FORMAT.yen(s.sales)}</td>
+                <td data-label="件数" class="num">${s.count}</td>
+                <td data-label="平均単価" class="num">${FORMAT.yen(s.count ? Math.floor(s.sales / s.count) : 0)}</td>
             </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
+        `).join('') || '<tr><td colspan="5" class="empty-cell" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
     }
 
     async function loadMenu() {
@@ -226,13 +226,13 @@
         const tbody = document.querySelector('#menu-table tbody');
         tbody.innerHTML = data.menu.map((m, i) => `
             <tr>
-                <td>${i + 1}</td>
-                <td>${escapeHtml(m.name)}</td>
-                <td class="num">${FORMAT.yen(m.sales)}</td>
-                <td class="num">${m.count}</td>
-                <td class="num">${FORMAT.yen(m.count ? Math.floor(m.sales / m.count) : 0)}</td>
+                <td data-label="順位">${i + 1}</td>
+                <td data-label="メニュー">${escapeHtml(m.name)}</td>
+                <td data-label="売上" class="num">${FORMAT.yen(m.sales)}</td>
+                <td data-label="件数" class="num">${m.count}</td>
+                <td data-label="平均単価" class="num">${FORMAT.yen(m.count ? Math.floor(m.sales / m.count) : 0)}</td>
             </tr>
-        `).join('') || '<tr><td colspan="5" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
+        `).join('') || '<tr><td colspan="5" class="empty-cell" style="text-align:center;color:#999;padding:2rem;">データなし</td></tr>';
     }
 
     // ============================================
@@ -334,17 +334,17 @@
         const data = await API.attendanceToday();
         const tbody = document.querySelector('#attendance-today-table tbody');
         if (!data.today || data.today.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">本日の打刻なし</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-cell" style="text-align:center;color:#999;padding:2rem;">本日の打刻なし</td></tr>';
             return;
         }
         tbody.innerHTML = data.today.map(p => {
             const time = p.timestamp ? new Date(p.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : '-';
             return `
                 <tr>
-                    <td>${time}</td>
-                    <td>${escapeHtml(p.staffName)}</td>
-                    <td><span class="tag">${escapeHtml(p.type)}</span></td>
-                    <td>${escapeHtml(p.memo || '-')}</td>
+                    <td data-label="時刻">${time}</td>
+                    <td data-label="スタッフ">${escapeHtml(p.staffName)}</td>
+                    <td data-label="種別"><span class="tag">${escapeHtml(p.type)}</span></td>
+                    <td data-label="備考">${escapeHtml(p.memo || '-')}</td>
                 </tr>
             `;
         }).join('');
@@ -355,7 +355,7 @@
         document.getElementById('attendance-month').textContent = (data.month || '').replace('-', '/');
         const tbody = document.querySelector('#attendance-summary-table tbody');
         if (!data.summary || data.summary.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:2rem;">今月の勤務記録なし</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-cell" style="text-align:center;color:#999;padding:2rem;">今月の勤務記録なし</td></tr>';
             return;
         }
         tbody.innerHTML = data.summary.map(s => {
@@ -364,10 +364,10 @@
             const wage = s.estimatedWage != null ? FORMAT.yen(s.estimatedWage) : '-';
             return `
                 <tr>
-                    <td>${escapeHtml(s.name)}</td>
-                    <td class="num">${s.workDays}日</td>
-                    <td class="num">${h}h ${m}m</td>
-                    <td class="num">${wage}</td>
+                    <td data-label="スタッフ">${escapeHtml(s.name)}</td>
+                    <td data-label="出勤日数" class="num">${s.workDays}日</td>
+                    <td data-label="勤務時間" class="num">${h}h ${m}m</td>
+                    <td data-label="概算給与" class="num">${wage}</td>
                 </tr>
             `;
         }).join('');
@@ -989,20 +989,20 @@
         }
 
         if (invoices.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:2rem;">該当する請求書なし</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-cell" style="text-align:center;color:#999;padding:2rem;">該当する請求書なし</td></tr>';
             return;
         }
 
         tbody.innerHTML = invoices.map(i => `
             <tr>
-                <td><span style="font-family:var(--font-en)">${escapeHtml(i.invoiceNo)}</span></td>
-                <td>${escapeHtml(i.staffName)}</td>
-                <td>${escapeHtml(i.targetMonth || '-')}</td>
-                <td class="num">${i.visitCount}</td>
-                <td class="num">${FORMAT.yen(i.salesExclTax)}</td>
-                <td class="num">${FORMAT.yen(i.feeAmount)}</td>
-                <td>${invoiceStatusBadge(i.status)}</td>
-                <td>${invoiceActions(i)}</td>
+                <td data-label="請求書No"><span style="font-family:var(--font-en)">${escapeHtml(i.invoiceNo)}</span></td>
+                <td data-label="スタッフ">${escapeHtml(i.staffName)}</td>
+                <td data-label="対象月">${escapeHtml(i.targetMonth || '-')}</td>
+                <td data-label="件数" class="num">${i.visitCount}</td>
+                <td data-label="売上(税抜)" class="num">${FORMAT.yen(i.salesExclTax)}</td>
+                <td data-label="報酬額" class="num">${FORMAT.yen(i.feeAmount)}</td>
+                <td data-label="ステータス">${invoiceStatusBadge(i.status)}</td>
+                <td data-label="操作">${invoiceActions(i)}</td>
             </tr>
         `).join('');
 
