@@ -46,6 +46,7 @@ const NOTION_API = 'https://api.notion.com/v1';
 const NOTION_VERSION = '2022-06-28';
 
 const ALLOWED_ORIGINS = [
+  'https://sora.minatech1210.com',
   'https://sora-dashboard.minatech1210.com',
   'https://sora-dashboard.pages.dev',
   'https://minatech-inc.github.io',

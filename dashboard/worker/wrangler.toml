@@ -1,0 +1,21 @@
+name = "sora-dashboard-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# R2 bucket: 顧客写真ストレージ
+[[r2_buckets]]
+binding = "PHOTOS"
+bucket_name = "sora-salon-photos"
+
+# 観測性
+[observability]
+enabled = true
+
+[observability.logs]
+enabled = true
+
+# 注意:
+# - NOTION_TOKEN / DASHBOARD_PASSWORD / *_DB_ID 等のシークレットは
+#   Cloudflareダッシュボードの "Variables and Secrets" で管理
+# - PHOTOS_PUBLIC_BASE は Text型変数として同セクションで管理
+# このwrangler.tomlにシークレットを書かないこと
