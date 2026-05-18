@@ -1490,32 +1490,64 @@ a { color: inherit; text-decoration: none; }
     .customer-avatar { width: 40px; height: 40px; font-size: 1rem; }
     .customer-name { font-size: 0.95rem; }
 
-    /* ---------- 顧客モーダル：フルスクリーン化 ---------- */
+    /* ---------- 顧客モーダル：完全フルスクリーン化（レール上にもかぶせる） ---------- */
+    .customer-modal { z-index: 200; } /* レール(z-index:50)より上 */
     .customer-modal-card {
-        width: calc(100% - 56px);
-        max-width: calc(100% - 56px);
-        margin-left: 56px;
+        width: 100%;
+        max-width: 100%;
+        margin-left: 0;
         height: 100vh;
         max-height: 100vh;
         border-radius: 0;
-        padding: 1.5rem 1.25rem 1.5rem;
+        padding: 1.25rem 1rem 2rem;
     }
     .customer-modal-close {
         top: 0.75rem;
         right: 0.85rem;
         width: 32px;
         height: 32px;
+        z-index: 1;
     }
+
+    /* ヘッダーを縦積みにして「編集」「施術追加」ボタンを必ず見える位置に */
     .customer-detail-header {
+        flex-direction: column;
+        align-items: stretch;
         gap: 0.85rem;
         margin-bottom: 1rem;
         padding-bottom: 1rem;
+        padding-right: 2.5rem; /* 閉じるボタン用の余白 */
     }
+    .customer-detail-header > div:first-child + div {
+        /* 名前ブロック */
+        flex: 1;
+        min-width: 0;
+    }
+    .customer-detail-header > .customer-avatar { align-self: flex-start; }
     .customer-detail-avatar { width: 56px; height: 56px; font-size: 1.3rem; }
-    .customer-detail-name { font-size: 1.2rem; }
+    .customer-detail-name { font-size: 1.2rem; word-break: break-word; }
+    .customer-detail-sub { font-size: 0.78rem; }
+
+    /* アクションボタンをカード幅いっぱいに */
+    .customer-actions {
+        align-self: stretch;
+        gap: 0.5rem;
+    }
+    .customer-actions .invoice-action-btn {
+        flex: 1;
+        padding: 0.65rem 0.85rem;
+        font-size: 0.88rem;
+        text-align: center;
+    }
+
     .customer-detail-props { grid-template-columns: 1fr 1fr; gap: 0.65rem; }
     .detail-prop-value { font-size: 0.85rem; }
     .treatment-photos { grid-template-columns: repeat(3, 1fr); }
+
+    /* 編集フォームのグリッド・ボタンをタップしやすく */
+    .form-grid-2 { grid-template-columns: 1fr; gap: 0.75rem; }
+    .form-actions { flex-direction: column-reverse; gap: 0.5rem; }
+    .form-actions .invoice-action-btn { width: 100%; padding: 0.75rem; font-size: 0.92rem; }
 
     /* ---------- 請求書ツールバー ---------- */
     .invoice-toolbar {
@@ -1578,7 +1610,7 @@ a { color: inherit; text-decoration: none; }
     /* 左レールをさらに細く */
     .sidebar { width: 48px; }
     .main { width: calc(100% - 48px); margin-left: 48px; }
-    .customer-modal-card { width: calc(100% - 48px); max-width: calc(100% - 48px); margin-left: 48px; }
+    /* モーダルはフルスクリーン維持 */
     .nav-item { width: 38px; min-width: 38px; height: 38px; border-radius: 8px; }
     .nav-icon { width: 19px; height: 19px; }
     .btn-logout { width: 36px; height: 36px; font-size: 0.58rem; }
