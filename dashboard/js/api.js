@@ -34,6 +34,9 @@ const API = {
     // Customers
     customerList() { return this.request('/api/customers/list'); },
     customerDetail(id) { return this.request('/api/customers/' + id); },
+    customerCreate(data) {
+        return this._fetchJson('/api/customers', { method: 'POST', body: data });
+    },
     customerUpdate(id, data) {
         return this._fetchJson('/api/customers/' + id, { method: 'PATCH', body: data });
     },

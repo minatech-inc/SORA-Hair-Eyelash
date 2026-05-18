@@ -546,7 +546,13 @@ a { color: inherit; text-decoration: none; }
 }
 .customer-tab:hover { background: var(--ivory); border-color: var(--sage); }
 .customer-tab.active { background: var(--sage); color: white; border-color: var(--sage); }
-.customer-search-wrap { flex: 1; max-width: 280px; }
+.customer-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    flex: 0 0 auto;
+}
+.customer-search-wrap { flex: 1; min-width: 0; max-width: 280px; }
 .customer-search {
     width: 100%;
     padding: 0.55rem 1rem;
@@ -557,6 +563,36 @@ a { color: inherit; text-decoration: none; }
     background: white;
 }
 .customer-search:focus { outline: none; border-color: var(--sage); }
+
+.btn-new-customer {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1rem;
+    background: var(--sage);
+    color: white;
+    border: 1px solid var(--sage);
+    border-radius: var(--radius-sm);
+    font-family: inherit;
+    font-size: 0.88rem;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+    box-shadow: 0 1px 3px rgba(107, 86, 65, 0.1);
+}
+.btn-new-customer:hover {
+    background: var(--sage-dark);
+    border-color: var(--sage-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(143, 160, 133, 0.3);
+}
+.btn-new-customer-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    font-weight: 500;
+}
+.btn-new-customer-label { font-weight: 500; }
 
 .customer-grid {
     display: grid;
@@ -1483,7 +1519,18 @@ a { color: inherit; text-decoration: none; }
     }
     .customer-tabs::-webkit-scrollbar { display: none; }
     .customer-tab { flex-shrink: 0; padding: 0.45rem 0.95rem; font-size: 0.82rem; }
-    .customer-search-wrap { max-width: none; }
+    .customer-toolbar-right {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .customer-search-wrap { max-width: none; flex: 1; }
+    .btn-new-customer {
+        padding: 0.55rem 0.85rem;
+        font-size: 0.82rem;
+    }
+    .btn-new-customer-label { display: none; } /* モバイルは + アイコンのみ */
+    .btn-new-customer-icon { font-size: 1.4rem; }
 
     .customer-card { padding: 1rem; }
     .customer-card-header { gap: 0.75rem; margin-bottom: 0.7rem; }

@@ -454,6 +454,9 @@
 
         document.getElementById('customer-modal-backdrop').addEventListener('click', closeCustomerModal);
         document.getElementById('customer-modal-close').addEventListener('click', closeCustomerModal);
+
+        const newBtn = document.getElementById('btn-new-customer');
+        if (newBtn) newBtn.addEventListener('click', openCustomerCreate);
     }
 
     function renderCustomers() {
@@ -608,6 +611,129 @@
         if (editBtn) editBtn.addEventListener('click', () => openCustomerEdit(c));
         const addBtn = document.querySelector('[data-add-treatment]');
         if (addBtn) addBtn.addEventListener('click', () => openTreatmentAdd(c));
+    }
+
+    function openCustomerCreate() {
+        // モーダルを開いて新規作成フォームを表示
+        document.getElementById('customer-modal').style.display = 'flex';
+        const html = `
+            <h3 style="font-family:var(--font-serif);color:var(--brown-dark);margin-bottom:1.5rem;font-size:1.3rem;">＋ 新規顧客を追加</h3>
+            <form id="customer-create-form" class="edit-form">
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label>お名前 <span style="color:var(--red);">*</span></label>
+                        <input type="text" name="お名前" required autofocus placeholder="山田 花子">
+                    </div>
+                    <div class="form-field">
+                        <label>フリガナ</label>
+                        <input type="text" name="フリガナ" placeholder="ヤマダ ハナコ">
+                    </div>
+                    <div class="form-field">
+                        <label>電話番号</label>
+                        <input type="tel" name="電話番号" placeholder="090-1234-5678">
+                    </div>
+                    <div class="form-field">
+                        <label>メール</label>
+                        <input type="email" name="メールアドレス" placeholder="example@email.com">
+                    </div>
+                    <div class="form-field">
+                        <label>生年月日</label>
+                        <input type="date" name="生年月日">
+                    </div>
+                    <div class="form-field">
+                        <label>初来店日</label>
+                        <input type="date" name="初来店日" value="${new Date().toISOString().slice(0,10)}">
+                    </div>
+                    <div class="form-field">
+                        <label>性別</label>
+                        <select name="性別">
+                            <option value="">未選択</option>
+                            <option value="女性" selected>女性</option>
+                            <option value="男性">男性</option>
+                            <option value="その他">その他</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>担当スタッフ</label>
+                        <select name="担当スタッフ">
+                            <option value="">未選択</option>
+                            <option value="唐木田 帆花">唐木田 帆花</option>
+                            <option value="玉木 愛">玉木 愛</option>
+                            <option value="磯谷">磯谷</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>ステータス</label>
+                        <select name="ステータス">
+                            <option value="アクティブ" selected>アクティブ</option>
+                            <option value="休眠">休眠</option>
+                            <option value="離反">離反</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>流入元</label>
+                        <select name="流入元">
+                            <option value="">未選択</option>
+                            <option value="Web予約">Web予約</option>
+                            <option value="紹介">紹介</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Google">Google</option>
+                            <option value="ホットペッパー">ホットペッパー</option>
+                            <option value="飛び込み">飛び込み</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-field">
+                    <label>健康状態・アレルギー</label>
+                    <textarea name="健康状態・アレルギー" rows="2" placeholder="例: 花粉症あり、コンタクト使用"></textarea>
+                </div>
+                <div class="form-field">
+                    <label>お好み・要望</label>
+                    <textarea name="お好み・要望" rows="2" placeholder="例: ナチュラル仕上げ希望"></textarea>
+                </div>
+                <div class="form-field">
+                    <label>スタッフメモ</label>
+                    <textarea name="スタッフメモ" rows="2"></textarea>
+                </div>
+                <div class="form-row" style="display:flex;gap:1rem;margin-top:1rem;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="LINE登録"> LINE登録</label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;"><input type="checkbox" name="同意書受理"> 同意書受理</label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="invoice-action-btn" id="cancel-create">キャンセル</button>
+                    <button type="submit" class="invoice-action-btn primary">登録</button>
+                </div>
+            </form>
+        `;
+        document.getElementById('customer-modal-content').innerHTML = html;
+
+        document.getElementById('cancel-create').addEventListener('click', closeCustomerModal);
+        document.getElementById('customer-create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '登録中...';
+            try {
+                const fd = new FormData(e.target);
+                const data = {};
+                for (const [k, v] of fd.entries()) data[k] = v;
+                data['LINE登録'] = e.target.querySelector('[name="LINE登録"]').checked;
+                data['同意書受理'] = e.target.querySelector('[name="同意書受理"]').checked;
+                const r = await API.customerCreate(data);
+                _customerList = []; // 一覧キャッシュクリア
+                await loadCustomers();
+                if (r && r.id) {
+                    // 作成した顧客の詳細を開く（そのまま施術追加に進める）
+                    openCustomerModal(r.id);
+                } else {
+                    closeCustomerModal();
+                }
+            } catch (err) {
+                alert('登録エラー: ' + err.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = '登録';
+            }
+        });
     }
 
     function openCustomerEdit(c) {

@@ -108,6 +108,9 @@ export default {
 
       // Customer endpoints
       if (url.pathname === '/api/customers/list') return await handleCustomerList(env, cors);
+      if (url.pathname === '/api/customers' && request.method === 'POST') {
+        return await handleCustomerCreate(request, env, cors);
+      }
       const customerMatch = url.pathname.match(/^\/api\/customers\/([a-f0-9-]+)$/);
       if (customerMatch) {
         if (request.method === 'PATCH') return await handleCustomerUpdate(customerMatch[1], request, env, cors);
@@ -715,6 +718,65 @@ async function handleCustomerDetail(customerId, env, cors) {
   delete detail.treatmentRelations;
 
   return jsonResponse({ customer: detail }, 200, cors);
+}
+
+function buildCustomerProperties(body) {
+  const props = {};
+
+  // 名前 (Title) - 新規時は必須
+  if (body['お名前'] !== undefined) {
+    props['お名前'] = { title: [{ text: { content: body['お名前'] } }] };
+  }
+
+  // テキストフィールド
+  const textFields = ['フリガナ', '健康状態・アレルギー', 'お好み・要望', 'スタッフメモ'];
+  for (const f of textFields) {
+    if (body[f] !== undefined) {
+      props[f] = { rich_text: [{ text: { content: body[f] || '' } }] };
+    }
+  }
+
+  if (body['電話番号'] !== undefined) props['電話番号'] = { phone_number: body['電話番号'] || null };
+  if (body['メールアドレス'] !== undefined) props['メールアドレス'] = { email: body['メールアドレス'] || null };
+  if (body['生年月日'] !== undefined) props['生年月日'] = body['生年月日'] ? { date: { start: body['生年月日'] } } : { date: null };
+  if (body['初来店日'] !== undefined) props['初来店日'] = body['初来店日'] ? { date: { start: body['初来店日'] } } : { date: null };
+
+  if (body['性別'] !== undefined) props['性別'] = body['性別'] ? { select: { name: body['性別'] } } : { select: null };
+  if (body['担当スタッフ'] !== undefined) props['担当スタッフ'] = body['担当スタッフ'] ? { select: { name: body['担当スタッフ'] } } : { select: null };
+  if (body['ステータス'] !== undefined) props['ステータス'] = body['ステータス'] ? { select: { name: body['ステータス'] } } : { select: null };
+  if (body['流入元'] !== undefined) props['流入元'] = body['流入元'] ? { select: { name: body['流入元'] } } : { select: null };
+
+  if (body['LINE登録'] !== undefined) props['LINE登録'] = { checkbox: !!body['LINE登録'] };
+  if (body['同意書受理'] !== undefined) props['同意書受理'] = { checkbox: !!body['同意書受理'] };
+
+  if (Array.isArray(body['タグ'])) {
+    props['タグ'] = { multi_select: body['タグ'].map(n => ({ name: n })) };
+  }
+  if (Array.isArray(body['撮影同意'])) {
+    props['撮影同意'] = { multi_select: body['撮影同意'].map(n => ({ name: n })) };
+  }
+
+  return props;
+}
+
+async function handleCustomerCreate(request, env, cors) {
+  const body = await request.json();
+  if (!body['お名前']) {
+    return jsonResponse({ error: 'お名前は必須です' }, 400, cors);
+  }
+  const props = buildCustomerProperties(body);
+  // ステータス未指定なら「アクティブ」を初期値に
+  if (!props['ステータス']) {
+    props['ステータス'] = { select: { name: 'アクティブ' } };
+  }
+  const r = await notionFetch(env, '/pages', {
+    method: 'POST',
+    body: JSON.stringify({
+      parent: { database_id: env.CUSTOMER_DB_ID },
+      properties: props,
+    }),
+  });
+  return jsonResponse({ success: true, id: r.id }, 200, cors);
 }
 
 async function handleCustomerUpdate(customerId, request, env, cors) {
