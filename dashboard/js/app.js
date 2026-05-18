@@ -434,9 +434,11 @@
         container.innerHTML = '<div class="loading-text">読み込み中...</div>';
         try {
             const data = await API.staffAdminList();
-            renderStaffAdminList(data.staff || []);
+            _staffAdminCache = data.staff || [];
+            renderStaffAdminList(_staffAdminCache);
         } catch (e) {
-            container.innerHTML = `<div style="color:#b85c4e;padding:1rem;">エラー: ${escapeHtml(e.message)}</div>`;
+            const detail = e.detail ? `<div style="font-size:0.78rem;margin-top:0.5rem;color:var(--gray-500);">${escapeHtml(e.detail)}</div>` : '';
+            container.innerHTML = `<div style="color:#b85c4e;padding:1rem;">エラー: ${escapeHtml(e.message)}${detail}</div>`;
         }
     }
 
@@ -486,17 +488,25 @@
         });
     }
 
+    let _staffAdminCache = []; // 現在表示中の全スタッフ（PIN重複チェック用）
+
     function openStaffEdit(staff) {
         const isNew = !staff;
         const s = staff || { name: '', pin: '', role: '', hourlyRate: '', salaryType: '', commissionRate: '', active: true, displayOrder: '', invoiceTarget: false };
 
         const html = `
-            <h3 style="font-family:var(--font-serif);color:var(--brown-dark);margin-bottom:1.5rem;font-size:1.3rem;">${isNew ? '＋ 新規スタッフ追加' : 'スタッフ情報を編集'}</h3>
-            <form id="staff-edit-form" class="edit-form">
+            <h3 style="font-family:var(--font-serif);color:var(--brown-dark);margin-bottom:0.5rem;font-size:1.3rem;">${isNew ? '＋ 新規スタッフ追加' : 'スタッフ情報を編集'}</h3>
+            <p style="font-size:0.78rem;color:var(--gray-500);margin-bottom:1.25rem;">
+                ${isNew ? '新規スタッフをスタッフマスタDBに登録します。' : ''}PIN は打刻・請求書承認で使用されます。
+            </p>
+            <div class="form-error-banner" id="staff-form-error" style="display:none;"></div>
+
+            <form id="staff-edit-form" class="edit-form" novalidate>
                 <div class="form-grid-2">
                     <div class="form-field">
                         <label>お名前 <span style="color:var(--red);">*</span></label>
                         <input type="text" name="お名前" value="${escapeHtml(s.name || '')}" required ${isNew ? 'autofocus' : ''}>
+                        <div class="field-hint" data-hint-for="お名前"></div>
                     </div>
                     <div class="form-field">
                         <label>役割</label>
@@ -507,14 +517,17 @@
                             <option value="スタッフ" ${s.role === 'スタッフ' ? 'selected' : ''}>スタッフ</option>
                             <option value="業務委託" ${s.role === '業務委託' ? 'selected' : ''}>業務委託</option>
                         </select>
+                        <div class="field-hint">※ Notionの「役割」プロパティに無い値はエラーになる場合あり</div>
                     </div>
                     <div class="form-field">
                         <label>PIN (4桁数字)</label>
-                        <input type="text" name="PIN" value="${escapeHtml(s.pin || '')}" maxlength="4" pattern="\\d{4}" inputmode="numeric" placeholder="例: 1234">
+                        <input type="text" name="PIN" value="${escapeHtml(s.pin || '')}" maxlength="4" inputmode="numeric" autocomplete="off" placeholder="例: 1234">
+                        <div class="field-hint" data-hint-for="PIN">半角数字4桁。他のスタッフと重複不可。打刻と請求書承認で使用</div>
                     </div>
                     <div class="form-field">
                         <label>表示順</label>
                         <input type="number" name="表示順" value="${s.displayOrder || ''}" min="0" step="1" placeholder="0">
+                        <div class="field-hint">数字が小さいほど先に表示されます</div>
                     </div>
                     <div class="form-field">
                         <label>報酬体系</label>
@@ -525,14 +538,17 @@
                             <option value="歩合制" ${s.salaryType === '歩合制' ? 'selected' : ''}>歩合制</option>
                             <option value="業務委託" ${s.salaryType === '業務委託' ? 'selected' : ''}>業務委託</option>
                         </select>
+                        <div class="field-hint">※ Notionの「報酬体系」プロパティに無い値はエラーになる場合あり</div>
                     </div>
                     <div class="form-field">
                         <label>時給 (円)</label>
                         <input type="number" name="時給" value="${s.hourlyRate || ''}" min="0" step="50" placeholder="例: 1200">
+                        <div class="field-hint">時給制の場合のみ入力</div>
                     </div>
                     <div class="form-field">
                         <label>歩合率 (%)</label>
                         <input type="number" name="歩合率(%)" value="${s.commissionRate || ''}" min="0" max="100" step="1" placeholder="例: 50">
+                        <div class="field-hint">歩合制/業務委託の場合のみ入力</div>
                     </div>
                 </div>
                 <div class="form-row" style="display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;">
@@ -554,18 +570,67 @@
         document.getElementById('staff-modal').style.display = 'flex';
         document.getElementById('cancel-staff-edit').addEventListener('click', closeStaffModal);
 
-        document.getElementById('staff-edit-form').addEventListener('submit', async (e) => {
+        const form = document.getElementById('staff-edit-form');
+        const errorBanner = document.getElementById('staff-form-error');
+        const pinInput = form.querySelector('[name="PIN"]');
+
+        // PIN リアルタイムバリデーション
+        const pinHint = form.querySelector('[data-hint-for="PIN"]');
+        const validatePin = () => {
+            const v = pinInput.value.trim();
+            pinInput.classList.remove('field-error', 'field-warn');
+            pinHint.classList.remove('error-hint', 'warn-hint');
+            pinHint.textContent = '半角数字4桁。他のスタッフと重複不可。打刻と請求書承認で使用';
+            if (!v) return; // 空はOK
+            if (!/^\d{4}$/.test(v)) {
+                pinInput.classList.add('field-error');
+                pinHint.classList.add('error-hint');
+                pinHint.textContent = '⚠ PINは半角数字4桁で入力してください';
+                return;
+            }
+            // 重複チェック
+            const dup = _staffAdminCache.find(x => x.pin === v && x.id !== s.id);
+            if (dup) {
+                pinInput.classList.add('field-warn');
+                pinHint.classList.add('warn-hint');
+                pinHint.textContent = `⚠ このPINは「${dup.name}」さんと重複しています`;
+            }
+        };
+        pinInput.addEventListener('input', validatePin);
+
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const submitBtn = e.target.querySelector('button[type="submit"]');
+            errorBanner.style.display = 'none';
+
+            const fd = new FormData(e.target);
+            const data = {};
+            for (const [k, v] of fd.entries()) data[k] = v;
+            data['有効'] = form.querySelector('[name="有効"]').checked;
+            data['請求書対象'] = form.querySelector('[name="請求書対象"]').checked;
+
+            // ----- クライアント側バリデーション -----
+            const errors = [];
+            if (!data['お名前'] || !data['お名前'].trim()) {
+                errors.push('お名前は必須です');
+            }
+            if (data['PIN'] && !/^\d{4}$/.test(data['PIN'])) {
+                errors.push('PINは半角数字4桁で入力してください');
+            }
+            if (data['PIN']) {
+                const dup = _staffAdminCache.find(x => x.pin === data['PIN'] && x.id !== s.id);
+                if (dup) errors.push(`PIN「${data['PIN']}」は「${dup.name}」さんと重複しています`);
+            }
+            if (errors.length) {
+                showFormError(errorBanner, '入力内容を確認してください', errors);
+                return;
+            }
+
+            const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             const originalLabel = submitBtn.textContent;
             submitBtn.textContent = '保存中...';
+
             try {
-                const fd = new FormData(e.target);
-                const data = {};
-                for (const [k, v] of fd.entries()) data[k] = v;
-                data['有効'] = e.target.querySelector('[name="有効"]').checked;
-                data['請求書対象'] = e.target.querySelector('[name="請求書対象"]').checked;
                 if (isNew) {
                     await API.staffCreate(data);
                 } else {
@@ -574,11 +639,25 @@
                 closeStaffModal();
                 await loadSettings();
             } catch (err) {
-                alert('エラー: ' + err.message);
+                const details = [];
+                if (err.detail && err.detail !== err.message) details.push(err.detail);
+                if (err.notionCode) details.push(`code: ${err.notionCode}`);
+                if (err.status) details.push(`HTTP ${err.status}`);
+                showFormError(errorBanner, err.message || '保存に失敗しました', details);
                 submitBtn.disabled = false;
                 submitBtn.textContent = originalLabel;
             }
         });
+    }
+
+    function showFormError(banner, title, details) {
+        const items = (details || []).filter(Boolean).map(d => `<li>${escapeHtml(d)}</li>`).join('');
+        banner.innerHTML = `
+            <div class="form-error-title">⚠ ${escapeHtml(title)}</div>
+            ${items ? `<ul class="form-error-list">${items}</ul>` : ''}
+        `;
+        banner.style.display = 'block';
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     // ============================================

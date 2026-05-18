@@ -77,7 +77,13 @@ const API = {
             body: body ? JSON.stringify(body) : undefined,
         });
         const data = await r.json().catch(() => ({}));
-        if (!r.ok) throw new Error(data.error || 'エラー');
+        if (!r.ok) {
+            const err = new Error(data.error || `エラー (HTTP ${r.status})`);
+            err.detail = data.detail || '';
+            err.status = r.status;
+            err.notionCode = data.notion_code || null;
+            throw err;
+        }
         return data;
     },
 

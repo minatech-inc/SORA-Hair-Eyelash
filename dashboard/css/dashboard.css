@@ -1341,6 +1341,55 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* ============================================
+   Form: error banner + inline hints
+   ============================================ */
+.form-error-banner {
+    background: #fce5e5;
+    border: 1px solid #ebbcbc;
+    border-left: 4px solid var(--red);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    margin-bottom: 1.25rem;
+    color: var(--gray-900);
+}
+.form-error-title {
+    color: var(--red);
+    font-weight: 600;
+    font-size: 0.92rem;
+    margin-bottom: 0.4rem;
+}
+.form-error-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    font-size: 0.82rem;
+    color: var(--gray-700);
+    line-height: 1.7;
+}
+.form-error-list li { margin: 0.1rem 0; }
+
+.field-hint {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    margin-top: 0.25rem;
+    line-height: 1.4;
+}
+.field-hint.error-hint { color: var(--red); }
+.field-hint.warn-hint { color: #a36c2e; }
+
+.form-field input.field-error,
+.form-field input.field-warn {
+    border-width: 2px;
+}
+.form-field input.field-error {
+    border-color: var(--red);
+    background: #fff8f8;
+}
+.form-field input.field-warn {
+    border-color: #d4a854;
+    background: #fffaef;
+}
+
+/* ============================================
    Responsive
    ============================================ */
 @media (max-width: 1024px) {

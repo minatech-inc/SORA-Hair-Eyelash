@@ -163,10 +163,42 @@ export default {
       return jsonResponse({ status: 'ok', service: 'SORA Dashboard API' }, 200, cors);
     } catch (err) {
       console.error('Worker error:', err);
-      return jsonResponse({ error: 'Internal error', detail: err.message }, 500, cors);
+      // Notion API エラーは詳細を返す
+      if (err.notionStatus) {
+        const status = err.notionStatus === 400 || err.notionStatus === 404 ? err.notionStatus : 502;
+        return jsonResponse({
+          error: humanizeNotionError(err),
+          detail: err.notionMessage,
+          notion_code: err.notionCode,
+        }, status, cors);
+      }
+      return jsonResponse({ error: 'サーバーエラー', detail: err.message }, 500, cors);
     }
   },
 };
+
+function humanizeNotionError(err) {
+  const msg = err.notionMessage || '';
+  // 代表的なケースを日本語化
+  if (/option.*not found|Invalid.*option|is not a valid select option/i.test(msg)) {
+    const opt = msg.match(/"([^"]+)"/);
+    return `選択肢「${opt ? opt[1] : '?'}」が Notion DB に存在しません。スタッフマスタの該当プロパティに選択肢を追加するか、別の値を選んでください。`;
+  }
+  if (/property.*does not exist|Could not find property/i.test(msg)) {
+    const prop = msg.match(/property.*?"([^"]+)"/i);
+    return `Notion DB にプロパティ「${prop ? prop[1] : '?'}」が存在しません。`;
+  }
+  if (/Invalid request URL|invalid_request/i.test(msg)) {
+    return `Notion API リクエストが不正です: ${msg}`;
+  }
+  if (/Unauthorized|invalid.*token/i.test(msg)) {
+    return `Notion API 認証エラー。インテグレーションのトークン/権限を確認してください。`;
+  }
+  if (/rate.*limit/i.test(msg)) {
+    return `Notion API レート制限。少し待って再試行してください。`;
+  }
+  return `Notion API エラー: ${msg}`;
+}
 
 // =====================================================
 // Auth (Dashboard owner)
@@ -212,7 +244,15 @@ async function notionFetch(env, path, opts = {}) {
     },
   });
   if (!r.ok) {
-    throw new Error(`Notion API ${r.status}: ${await r.text()}`);
+    const raw = await r.text();
+    let parsed = null;
+    try { parsed = JSON.parse(raw); } catch (_) { /* not json */ }
+    const err = new Error(parsed?.message || `Notion API ${r.status}`);
+    err.notionStatus = r.status;
+    err.notionCode = parsed?.code || null;
+    err.notionMessage = parsed?.message || raw;
+    err.notionRaw = parsed || raw;
+    throw err;
   }
   return r.json();
 }
