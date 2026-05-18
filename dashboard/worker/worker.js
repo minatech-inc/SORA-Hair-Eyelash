@@ -106,6 +106,18 @@ export default {
       if (url.pathname === '/api/attendance/today')      return await handleAttendanceToday(env, cors);
       if (url.pathname === '/api/attendance/summary')    return await handleAttendanceSummary(env, cors);
 
+      // Staff admin endpoints (auth required)
+      if (url.pathname === '/api/staff/admin-list' && request.method === 'GET') {
+        return await handleStaffAdminList(env, cors);
+      }
+      if (url.pathname === '/api/staff/admin' && request.method === 'POST') {
+        return await handleStaffCreate(request, env, cors);
+      }
+      const staffAdminMatch = url.pathname.match(/^\/api\/staff\/admin\/([a-f0-9-]+)$/);
+      if (staffAdminMatch && request.method === 'PATCH') {
+        return await handleStaffUpdate(staffAdminMatch[1], request, env, cors);
+      }
+
       // Customer endpoints
       if (url.pathname === '/api/customers/list') return await handleCustomerList(env, cors);
       if (url.pathname === '/api/customers' && request.method === 'POST') {
@@ -463,6 +475,79 @@ async function handleStaffList(env, cors) {
       invoiceTarget: s.invoiceTarget,
     }));
   return jsonResponse({ staff: list }, 200, cors);
+}
+
+// =====================================================
+// Staff admin (auth token required)
+// =====================================================
+async function handleStaffAdminList(env, cors) {
+  /** ADMIN: 全フィールド（PIN含む）を返す。無効スタッフも含む */
+  const staffMap = await fetchStaffMap(env);
+  const list = Object.values(staffMap)
+    .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+  return jsonResponse({ staff: list }, 200, cors);
+}
+
+function buildStaffProperties(body) {
+  const props = {};
+  if (body['お名前'] !== undefined) {
+    props['お名前'] = { title: [{ text: { content: body['お名前'] } }] };
+  }
+  if (body['PIN'] !== undefined) {
+    props['PIN'] = { rich_text: [{ text: { content: body['PIN'] || '' } }] };
+  }
+  if (body['役割'] !== undefined) {
+    props['役割'] = body['役割'] ? { select: { name: body['役割'] } } : { select: null };
+  }
+  if (body['時給'] !== undefined) {
+    props['時給'] = { number: body['時給'] === '' || body['時給'] == null ? null : Number(body['時給']) };
+  }
+  if (body['報酬体系'] !== undefined) {
+    props['報酬体系'] = body['報酬体系'] ? { select: { name: body['報酬体系'] } } : { select: null };
+  }
+  if (body['歩合率(%)'] !== undefined) {
+    props['歩合率(%)'] = { number: body['歩合率(%)'] === '' || body['歩合率(%)'] == null ? null : Number(body['歩合率(%)']) };
+  }
+  if (body['表示順'] !== undefined) {
+    props['表示順'] = { number: body['表示順'] === '' || body['表示順'] == null ? null : Number(body['表示順']) };
+  }
+  if (body['有効'] !== undefined) props['有効'] = { checkbox: !!body['有効'] };
+  if (body['請求書対象'] !== undefined) props['請求書対象'] = { checkbox: !!body['請求書対象'] };
+  return props;
+}
+
+async function handleStaffCreate(request, env, cors) {
+  const body = await request.json();
+  if (!body['お名前']) {
+    return jsonResponse({ error: 'お名前は必須です' }, 400, cors);
+  }
+  if (body['PIN'] && !/^\d{4}$/.test(body['PIN'])) {
+    return jsonResponse({ error: 'PINは4桁の数字で入力してください' }, 400, cors);
+  }
+  const props = buildStaffProperties(body);
+  // デフォルトで有効に
+  if (props['有効'] === undefined) props['有効'] = { checkbox: true };
+  const r = await notionFetch(env, '/pages', {
+    method: 'POST',
+    body: JSON.stringify({
+      parent: { database_id: env.STAFF_DB_ID },
+      properties: props,
+    }),
+  });
+  return jsonResponse({ success: true, id: r.id }, 200, cors);
+}
+
+async function handleStaffUpdate(staffId, request, env, cors) {
+  const body = await request.json();
+  if (body['PIN'] !== undefined && body['PIN'] !== '' && !/^\d{4}$/.test(body['PIN'])) {
+    return jsonResponse({ error: 'PINは4桁の数字で入力してください' }, 400, cors);
+  }
+  const props = buildStaffProperties(body);
+  await notionFetch(env, `/pages/${staffId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ properties: props }),
+  });
+  return jsonResponse({ success: true }, 200, cors);
 }
 
 async function handlePunch(request, env, cors) {

@@ -1238,6 +1238,109 @@ a { color: inherit; text-decoration: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ============================================
+   Settings: Staff admin
+   ============================================ */
+.settings-section {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--ivory-dark);
+}
+.settings-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.settings-section-title {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 500;
+    color: var(--brown-dark);
+    letter-spacing: 0.06em;
+    margin: 0 0 0.25rem;
+}
+.settings-section-sub {
+    font-size: 0.82rem;
+    color: var(--gray-500);
+    margin: 0;
+}
+
+.staff-admin-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+}
+.staff-admin-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.1rem;
+    background: var(--cream);
+    border: 1px solid var(--ivory-dark);
+    border-radius: var(--radius-sm);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.staff-admin-card:hover {
+    border-color: var(--sage-soft);
+    box-shadow: var(--shadow-sm);
+}
+.staff-admin-card.inactive {
+    opacity: 0.65;
+    background: var(--gray-100);
+}
+.staff-admin-card-main {
+    flex: 1;
+    min-width: 0;
+}
+.staff-admin-name {
+    font-family: var(--font-serif);
+    font-size: 1.02rem;
+    color: var(--brown-dark);
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.staff-admin-meta {
+    font-size: 0.78rem;
+    color: var(--gray-500);
+    line-height: 1.5;
+}
+.staff-admin-badge {
+    display: inline-block;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-family: var(--font-sans);
+    letter-spacing: 0.05em;
+    font-weight: 500;
+}
+.staff-admin-badge.inactive-badge {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+.staff-admin-badge.invoice-badge {
+    background: var(--sage-pale);
+    color: var(--sage-dark);
+}
+.staff-pin {
+    background: white;
+    border: 1px solid var(--beige);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-family: var(--font-en);
+    font-size: 0.92rem;
+    letter-spacing: 0.15em;
+    color: var(--brown-dark);
+}
+
+/* ============================================
    Responsive
    ============================================ */
 @media (max-width: 1024px) {
@@ -1638,6 +1741,18 @@ a { color: inherit; text-decoration: none; }
     }
     .punch-buttons { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
     .punch-btn { padding: 0.95rem 0.5rem; font-size: 0.88rem; letter-spacing: 0.05em; }
+
+    /* ---------- 設定画面 ---------- */
+    .settings-section { padding: 1.1rem 1rem; }
+    .settings-section-head { flex-direction: column; align-items: stretch; gap: 0.75rem; }
+    .staff-admin-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.6rem;
+        padding: 0.85rem 0.95rem;
+    }
+    .staff-admin-card .invoice-action-btn { align-self: flex-end; }
+    .staff-admin-meta { font-size: 0.75rem; }
 
     /* ---------- QRページ ---------- */
     .qr-page-card { padding: 2rem 1.5rem; }

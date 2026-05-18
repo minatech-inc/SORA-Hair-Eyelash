@@ -102,6 +102,7 @@
                 case 'invoices': await loadInvoices(); break;
                 case 'customers': await loadCustomers(); break;
                 case 'qr': await loadQR(); break;
+                case 'settings': await loadSettings(); break;
             }
             updateLastUpdated();
         } catch (err) {
@@ -422,6 +423,162 @@
                 }
             });
         }
+    }
+
+    // ============================================
+    // Settings: Staff management
+    // ============================================
+    async function loadSettings() {
+        bindStaffAdminHandlers();
+        const container = document.getElementById('staff-admin-list');
+        container.innerHTML = '<div class="loading-text">読み込み中...</div>';
+        try {
+            const data = await API.staffAdminList();
+            renderStaffAdminList(data.staff || []);
+        } catch (e) {
+            container.innerHTML = `<div style="color:#b85c4e;padding:1rem;">エラー: ${escapeHtml(e.message)}</div>`;
+        }
+    }
+
+    function bindStaffAdminHandlers() {
+        if (window._staffAdminBound) return;
+        window._staffAdminBound = true;
+        document.getElementById('btn-new-staff').addEventListener('click', () => openStaffEdit(null));
+        document.getElementById('staff-modal-backdrop').addEventListener('click', closeStaffModal);
+        document.getElementById('staff-modal-close').addEventListener('click', closeStaffModal);
+    }
+
+    function closeStaffModal() {
+        document.getElementById('staff-modal').style.display = 'none';
+    }
+
+    function renderStaffAdminList(staffList) {
+        const container = document.getElementById('staff-admin-list');
+        if (staffList.length === 0) {
+            container.innerHTML = '<div class="loading-text">スタッフ未登録</div>';
+            return;
+        }
+        container.innerHTML = staffList.map(s => `
+            <div class="staff-admin-card ${s.active ? '' : 'inactive'}" data-staff-id="${s.id}">
+                <div class="staff-admin-card-main">
+                    <div class="staff-admin-name">
+                        ${escapeHtml(s.name)}
+                        ${s.active ? '' : '<span class="staff-admin-badge inactive-badge">無効</span>'}
+                        ${s.invoiceTarget ? '<span class="staff-admin-badge invoice-badge">請求書対象</span>' : ''}
+                    </div>
+                    <div class="staff-admin-meta">
+                        ${escapeHtml(s.role || '役割未設定')}
+                        ・ PIN: ${s.pin ? '<code class="staff-pin">' + escapeHtml(s.pin) + '</code>' : '<span style="color:#b85c4e;">未設定</span>'}
+                        ・ ${escapeHtml(s.salaryType || '報酬体系未設定')}
+                        ${s.hourlyRate ? '・ 時給 ' + FORMAT.yen(s.hourlyRate) : ''}
+                        ${s.commissionRate ? '・ 歩合 ' + s.commissionRate + '%' : ''}
+                    </div>
+                </div>
+                <button class="invoice-action-btn primary" data-edit-staff="${s.id}">編集</button>
+            </div>
+        `).join('');
+        container.querySelectorAll('[data-edit-staff]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const id = btn.dataset.editStaff;
+                const staff = staffList.find(s => s.id === id);
+                openStaffEdit(staff);
+            });
+        });
+    }
+
+    function openStaffEdit(staff) {
+        const isNew = !staff;
+        const s = staff || { name: '', pin: '', role: '', hourlyRate: '', salaryType: '', commissionRate: '', active: true, displayOrder: '', invoiceTarget: false };
+
+        const html = `
+            <h3 style="font-family:var(--font-serif);color:var(--brown-dark);margin-bottom:1.5rem;font-size:1.3rem;">${isNew ? '＋ 新規スタッフ追加' : 'スタッフ情報を編集'}</h3>
+            <form id="staff-edit-form" class="edit-form">
+                <div class="form-grid-2">
+                    <div class="form-field">
+                        <label>お名前 <span style="color:var(--red);">*</span></label>
+                        <input type="text" name="お名前" value="${escapeHtml(s.name || '')}" required ${isNew ? 'autofocus' : ''}>
+                    </div>
+                    <div class="form-field">
+                        <label>役割</label>
+                        <select name="役割">
+                            <option value="">未選択</option>
+                            <option value="オーナー" ${s.role === 'オーナー' ? 'selected' : ''}>オーナー</option>
+                            <option value="店長" ${s.role === '店長' ? 'selected' : ''}>店長</option>
+                            <option value="スタッフ" ${s.role === 'スタッフ' ? 'selected' : ''}>スタッフ</option>
+                            <option value="業務委託" ${s.role === '業務委託' ? 'selected' : ''}>業務委託</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>PIN (4桁数字)</label>
+                        <input type="text" name="PIN" value="${escapeHtml(s.pin || '')}" maxlength="4" pattern="\\d{4}" inputmode="numeric" placeholder="例: 1234">
+                    </div>
+                    <div class="form-field">
+                        <label>表示順</label>
+                        <input type="number" name="表示順" value="${s.displayOrder || ''}" min="0" step="1" placeholder="0">
+                    </div>
+                    <div class="form-field">
+                        <label>報酬体系</label>
+                        <select name="報酬体系">
+                            <option value="">未選択</option>
+                            <option value="時給制" ${s.salaryType === '時給制' ? 'selected' : ''}>時給制</option>
+                            <option value="月給制" ${s.salaryType === '月給制' ? 'selected' : ''}>月給制</option>
+                            <option value="歩合制" ${s.salaryType === '歩合制' ? 'selected' : ''}>歩合制</option>
+                            <option value="業務委託" ${s.salaryType === '業務委託' ? 'selected' : ''}>業務委託</option>
+                        </select>
+                    </div>
+                    <div class="form-field">
+                        <label>時給 (円)</label>
+                        <input type="number" name="時給" value="${s.hourlyRate || ''}" min="0" step="50" placeholder="例: 1200">
+                    </div>
+                    <div class="form-field">
+                        <label>歩合率 (%)</label>
+                        <input type="number" name="歩合率(%)" value="${s.commissionRate || ''}" min="0" max="100" step="1" placeholder="例: 50">
+                    </div>
+                </div>
+                <div class="form-row" style="display:flex;gap:1.5rem;margin-top:1rem;flex-wrap:wrap;">
+                    <label style="display:flex;align-items:center;gap:0.5rem;">
+                        <input type="checkbox" name="有効" ${s.active ? 'checked' : ''}> 有効スタッフ
+                    </label>
+                    <label style="display:flex;align-items:center;gap:0.5rem;">
+                        <input type="checkbox" name="請求書対象" ${s.invoiceTarget ? 'checked' : ''}> 請求書対象（業務委託）
+                    </label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="invoice-action-btn" id="cancel-staff-edit">キャンセル</button>
+                    <button type="submit" class="invoice-action-btn primary">${isNew ? '登録' : '保存'}</button>
+                </div>
+            </form>
+        `;
+
+        document.getElementById('staff-modal-content').innerHTML = html;
+        document.getElementById('staff-modal').style.display = 'flex';
+        document.getElementById('cancel-staff-edit').addEventListener('click', closeStaffModal);
+
+        document.getElementById('staff-edit-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            const originalLabel = submitBtn.textContent;
+            submitBtn.textContent = '保存中...';
+            try {
+                const fd = new FormData(e.target);
+                const data = {};
+                for (const [k, v] of fd.entries()) data[k] = v;
+                data['有効'] = e.target.querySelector('[name="有効"]').checked;
+                data['請求書対象'] = e.target.querySelector('[name="請求書対象"]').checked;
+                if (isNew) {
+                    await API.staffCreate(data);
+                } else {
+                    await API.staffUpdate(s.id, data);
+                }
+                closeStaffModal();
+                await loadSettings();
+            } catch (err) {
+                alert('エラー: ' + err.message);
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalLabel;
+            }
+        });
     }
 
     // ============================================

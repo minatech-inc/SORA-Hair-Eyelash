@@ -37,6 +37,15 @@ const API = {
     customerCreate(data) {
         return this._fetchJson('/api/customers', { method: 'POST', body: data });
     },
+
+    // Staff admin (auth required)
+    staffAdminList() { return this.request('/api/staff/admin-list'); },
+    staffCreate(data) {
+        return this._fetchJson('/api/staff/admin', { method: 'POST', body: data });
+    },
+    staffUpdate(id, data) {
+        return this._fetchJson('/api/staff/admin/' + id, { method: 'PATCH', body: data });
+    },
     customerUpdate(id, data) {
         return this._fetchJson('/api/customers/' + id, { method: 'PATCH', body: data });
     },

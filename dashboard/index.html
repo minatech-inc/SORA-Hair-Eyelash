@@ -75,6 +75,13 @@
                 </svg>
                 <span>QRコード</span>
             </a>
+            <a href="#settings" class="nav-item" data-page="settings">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33h0A1.65 1.65 0 009 3.09V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/>
+                </svg>
+                <span>設定</span>
+            </a>
         </nav>
         <div class="sidebar-footer">
             <button class="btn-logout" id="btn-logout">ログアウト</button>
@@ -400,6 +407,36 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- SETTINGS page -->
+        <section class="page" id="page-settings" style="display:none;">
+            <div class="settings-section">
+                <div class="settings-section-head">
+                    <div>
+                        <h2 class="settings-section-title">スタッフ管理</h2>
+                        <p class="settings-section-sub">PIN・報酬体系・有効状態の設定</p>
+                    </div>
+                    <button class="btn-new-customer" id="btn-new-staff">
+                        <span class="btn-new-customer-icon">＋</span>
+                        <span class="btn-new-customer-label">新規スタッフ</span>
+                    </button>
+                </div>
+                <div class="staff-admin-list" id="staff-admin-list">
+                    <div class="loading-text">読み込み中...</div>
+                </div>
+            </div>
+
+            <!-- スタッフ編集モーダル -->
+            <div class="customer-modal" id="staff-modal" style="display:none;">
+                <div class="customer-modal-backdrop" id="staff-modal-backdrop"></div>
+                <div class="customer-modal-card" style="max-width: 560px;">
+                    <button class="customer-modal-close" id="staff-modal-close">×</button>
+                    <div id="staff-modal-content">
+                        <div class="loading-text">読み込み中...</div>
+                    </div>
+                </div>
             </div>
         </section>
 
